@@ -568,7 +568,7 @@
           <div class="eyebrow">Directional Estimate Tool</div>
           <h1>Estimate your GUIDEcx Implementation and Onboarding LOE and Timeline.</h1>
           <p>
-            Timelines may be dramatically reduced if process assets are shared for import.
+            *Timelines may be dramatically reduced if process assets are shared for import.
           </p>
         </div>
 
@@ -613,8 +613,10 @@
           <div class="field-grid">
             <label>
               Process is Documented
-              <input id="processDocumented" name="processDocumented" type="number" min="0" max="1" step="1" value="0" placeholder="0 = No, 1 = Yes">
-              <span class="field-help">Enter `1` for Yes or `0` for No.</span>
+              <select id="processDocumented" name="processDocumented">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
             </label>
 
             <label>
@@ -631,7 +633,7 @@
 
             <label>
               Weekly Hours Commit
-              <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0" step="0.1" value="0">
+              <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0" step="1" value="0">
               <span class="field-help">Your estimate hours committed to building templates.</span>
             </label>
           </div>
@@ -918,7 +920,7 @@
 
       const totalTasks = num("totalTasks");
       const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0);
-      const processDocumented = num("processDocumented") >= 1;
+      const processDocumented = document.getElementById("processDocumented").value === "yes";
       const buildingTasksHours = ((totalTasks * 7) / 60) + 4;
       const selectedFeatureValues = selectedValues("features");
       const featureWeeks = selectedFeatureValues.includes("timeTracking") || selectedFeatureValues.includes("resourceManagement") ? 1 : 0;
@@ -1021,7 +1023,10 @@
       drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
       drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
-      drawText("GUIDEcx LOE Calculator", 64, 688, 28, rgb(1, 1, 1), "F2");
+      drawText("GUIDEcx", 64, 688, 34, rgb(1, 1, 1), "F2");
+      drawText("CX", 183, 702, 18, rgb(1, 1, 1), "F2");
+      drawText("|", 235, 688, 30, rgb(1, 1, 1));
+      drawText("LOE Calculator", 268, 688, 30, rgb(1, 1, 1), "F2");
 
       const introLines = wrapText(
         "This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.",
@@ -1162,12 +1167,12 @@
     document.getElementById("downloadPdfButton").addEventListener("click", () => {
       calculate();
       const blob = buildPdfBlob();
-      const companyName = document.getElementById("companyName").value.trim() || "guidecx-loe-summary";
-      const safeName = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const companyName = document.getElementById("companyName").value.trim() || "Company Name";
+      const safeName = `GUIDEcx & ${companyName} Estimate LOE`.replace(/[\\/:*?"<>|]/g, "-");
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${safeName || "guidecx-loe-summary"}.pdf`;
+      link.download = `${safeName}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
