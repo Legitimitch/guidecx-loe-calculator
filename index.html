@@ -106,9 +106,18 @@
       width: min(100%, 1120px);
       background: #000000;
       border-radius: 20px;
-      padding: 0;
+      padding: 28px 24px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 180px;
+    }
+
+    .brand-lockup img {
+      width: min(920px, 100%);
+      height: auto;
     }
 
     .hero-copy {
@@ -266,7 +275,20 @@
       background: rgba(255, 255, 255, 0.92);
       color: var(--ink);
       padding: 13px 14px;
+      min-height: 52px;
       transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    .template-grid {
+      align-items: start;
+    }
+
+    .template-grid label {
+      grid-template-rows: auto auto auto;
+    }
+
+    .template-grid .field-help {
+      min-height: 2.8em;
     }
 
     input:focus,
@@ -561,7 +583,7 @@
     <section class="hero">
       <div class="hero-inner">
         <div class="brand-lockup">
-          <img src="assets/guidecx-loe-brand-dark.png" alt="GUIDEcx LOE Calculator branding">
+          <img src="assets/guidecx-full-white.png" alt="GUIDEcx LOE Calculator branding">
         </div>
 
         <div class="hero-copy">
@@ -610,7 +632,7 @@
             <p class="panel-copy">This will determine the estimate time needed to build your process manually in GUIDEcx.</p>
           </div>
 
-          <div class="field-grid">
+          <div class="field-grid template-grid">
             <label>
               Process is Documented
               <select id="processDocumented" name="processDocumented">
@@ -711,7 +733,7 @@
   </div>
 
   <section class="pdf-sheet" id="pdfSheet">
-    <img class="pdf-brand" src="assets/guidecx-loe-brand-dark.png" alt="GUIDEcx LOE Calculator branding">
+    <img class="pdf-brand" src="assets/guidecx-full-white.png" alt="GUIDEcx LOE Calculator branding">
     <p>
       This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.
     </p>
@@ -1023,10 +1045,10 @@
       drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
       drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
-      drawText("GUIDEcx", 64, 688, 34, rgb(1, 1, 1), "F2");
-      drawText("CX", 183, 702, 18, rgb(1, 1, 1), "F2");
-      drawText("|", 235, 688, 30, rgb(1, 1, 1));
-      drawText("LOE Calculator", 268, 688, 30, rgb(1, 1, 1), "F2");
+      drawText("GUIDEcx", 118, 688, 36, rgb(1, 1, 1), "F2");
+      drawText("CX", 244, 701, 18, rgb(1, 1, 1), "F2");
+      drawText("|", 300, 688, 32, rgb(1, 1, 1));
+      drawText("LOE Calculator", 334, 688, 32, rgb(1, 1, 1), "F2");
 
       const introLines = wrapText(
         "This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.",
