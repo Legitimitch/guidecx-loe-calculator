@@ -961,56 +961,213 @@
         .replace(/\)/g, "\\)");
     }
 
+    function wrapCanvasText(ctx, text, maxWidth) {
+      const words = String(text).split(/\s+/).filter(Boolean);
+      const lines = [];
+      let current = "";
+      words.forEach((word) => {
+        const candidate = current ? `${current} ${word}` : word;
+        if (ctx.measureText(candidate).width <= maxWidth || !current) {
+          current = candidate;
+        } else {
+          lines.push(current);
+          current = word;
+        }
+      });
+      if (current) lines.push(current);
+      return lines;
+    }
+
+    function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, color) {
+      const lines = wrapCanvasText(ctx, text, maxWidth);
+      ctx.fillStyle = color;
+      lines.forEach((line, index) => {
+        ctx.fillText(line, x, y + (index * lineHeight));
+      });
+      return lines.length * lineHeight;
+    }
+
+    function drawRoundRect(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fillStyle) {
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+      }
+      if (strokeStyle) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.stroke();
+      }
+    }
+
+    function jpegDataUrlToBinary(dataUrl) {
+      const base64 = dataUrl.split(",")[1];
+      return atob(base64);
+    }
+
     function buildPdfBlob() {
-      const lines = [
-        { text: "GUIDEcx LOE Calculator", size: 22 },
-        { text: "Directional Estimate Summary", size: 11 },
-        { text: "" },
-        { text: "GUIDEcx implementation estimate", size: 18 },
-        { text: "This estimate is intended for planning and alignment. It reflects what is known or shared at the time,", size: 10 },
-        { text: "process evolution, and critical integrations expressed as required for go-live as opposed to completed", size: 10 },
-        { text: "post go-live.", size: 10 },
-        { text: "" },
-        { text: `Building Tasks: ${document.getElementById("pdfBuildingTasks").textContent}`, size: 12 },
-        { text: `Template Build: ${document.getElementById("pdfTemplateWeeks").textContent}`, size: 12 },
-        { text: `Integrations: ${document.getElementById("pdfIntegrationWeeks").textContent}`, size: 12 },
-        { text: `Projected Go-Live: ${document.getElementById("pdfGoLive").textContent}`, size: 12 },
-        { text: "" },
-        { text: `Company Name: ${document.getElementById("pdfCompanyName").textContent}`, size: 11 },
-        { text: `Total Teams: ${document.getElementById("pdfTeams").textContent}`, size: 11 },
-        { text: `Total Tasks: ${document.getElementById("pdfTasks").textContent}`, size: 11 },
-        { text: `Undocumented Process: ${document.getElementById("pdfUndocumented").textContent}`, size: 11 },
-        { text: `Selected Integrations: ${document.getElementById("pdfIntegrations").textContent}`, size: 11 },
-        { text: `Additional Features: ${document.getElementById("pdfFeatures").textContent}`, size: 11 },
-        { text: `Feature Weeks: ${document.getElementById("pdfFeatureWeeks").textContent}`, size: 11 },
-        { text: `Template Build Days: ${document.getElementById("pdfTemplateDays").textContent}`, size: 11 },
-        { text: `Integration Days: ${document.getElementById("pdfIntegrationDays").textContent}`, size: 11 }
+      const width = 1240;
+      const height = 1754;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#f5f1ea";
+      ctx.fillRect(0, 0, width, height);
+
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#ffffff");
+      gradient.addColorStop(1, "#efe9df");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(38, 38, width - 76, height - 76);
+
+      drawRoundRect(ctx, 54, 54, width - 108, 220, 32, "#111111");
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 34px Avenir Next, Arial, sans-serif";
+      ctx.fillText("GUIDEcx LOE Calculator", 90, 116);
+      ctx.font = "600 18px Avenir Next, Arial, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.fillText("Directional Estimate Summary", 90, 152);
+      ctx.font = "700 54px Avenir Next, Arial, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("Implementation estimate", 90, 222);
+
+      ctx.font = "400 21px Avenir Next, Arial, sans-serif";
+      drawWrappedText(
+        ctx,
+        "This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.",
+        90,
+        320,
+        width - 180,
+        32,
+        "#5e5953"
+      );
+
+      const cards = [
+        ["Building Tasks", document.getElementById("pdfBuildingTasks").textContent],
+        ["Template Build", document.getElementById("pdfTemplateWeeks").textContent],
+        ["Integrations", document.getElementById("pdfIntegrationWeeks").textContent],
+        ["Projected Go-Live", document.getElementById("pdfGoLive").textContent]
       ];
 
-      if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
-        lines.push({ text: "" });
-        lines.push({ text: "Undocumented processes can extend timelines on average of two weeks.", size: 10 });
-      }
-
-      let y = 760;
-      const content = [];
-      lines.forEach((line) => {
-        if (!line.text) {
-          y -= 12;
-          return;
-        }
-        const size = line.size || 11;
-        content.push(`BT /F1 ${size} Tf 54 ${y} Td (${pdfEscape(line.text)}) Tj ET`);
-        y -= size > 16 ? 28 : 18;
+      const cardY = 430;
+      const cardWidth = 262;
+      const cardGap = 20;
+      cards.forEach((card, index) => {
+        const x = 90 + (index * (cardWidth + cardGap));
+        drawRoundRect(ctx, x, cardY, cardWidth, 180, 26, "#fbfaf7", "#ddd6cb");
+        ctx.fillStyle = "#6a645d";
+        ctx.font = "700 18px Avenir Next, Arial, sans-serif";
+        ctx.fillText(card[0], x + 24, cardY + 46);
+        ctx.fillStyle = "#111111";
+        ctx.font = index === 3 ? "700 34px Avenir Next, Arial, sans-serif" : "700 40px Avenir Next, Arial, sans-serif";
+        drawWrappedText(ctx, card[1], x + 24, cardY + 108, cardWidth - 48, 40, "#111111");
       });
 
-      const stream = content.join("\n");
+      drawRoundRect(ctx, 90, 660, 510, 820, 30, "#fffdfa", "#ddd6cb");
+      drawRoundRect(ctx, 640, 660, 510, 820, 30, "#fffdfa", "#ddd6cb");
+
+      ctx.fillStyle = "#111111";
+      ctx.font = "700 28px Avenir Next, Arial, sans-serif";
+      ctx.fillText("Project Inputs", 124, 718);
+      ctx.fillText("Estimate Notes", 674, 718);
+
+      const leftRows = [
+        ["Company Name", document.getElementById("pdfCompanyName").textContent],
+        ["Total Teams", document.getElementById("pdfTeams").textContent],
+        ["Total Tasks", document.getElementById("pdfTasks").textContent],
+        ["Undocumented Process", document.getElementById("pdfUndocumented").textContent],
+        ["Selected Integrations", document.getElementById("pdfIntegrations").textContent],
+        ["Additional Features", document.getElementById("pdfFeatures").textContent]
+      ];
+
+      let leftY = 790;
+      leftRows.forEach(([label, value]) => {
+        ctx.fillStyle = "#6a645d";
+        ctx.font = "700 16px Avenir Next, Arial, sans-serif";
+        ctx.fillText(label.toUpperCase(), 124, leftY);
+        ctx.fillStyle = "#111111";
+        ctx.font = "600 22px Avenir Next, Arial, sans-serif";
+        const used = drawWrappedText(ctx, value, 124, leftY + 38, 420, 30, "#111111");
+        leftY += Math.max(92, used + 48);
+      });
+
+      const rightRows = [
+        ["Feature Weeks", document.getElementById("pdfFeatureWeeks").textContent],
+        ["Template Build Days", document.getElementById("pdfTemplateDays").textContent],
+        ["Integration Days", document.getElementById("pdfIntegrationDays").textContent]
+      ];
+
+      let rightY = 790;
+      rightRows.forEach(([label, value]) => {
+        drawRoundRect(ctx, 674, rightY - 26, 442, 118, 24, "#f4efe6", null);
+        ctx.fillStyle = "#6a645d";
+        ctx.font = "700 16px Avenir Next, Arial, sans-serif";
+        ctx.fillText(label.toUpperCase(), 704, rightY + 6);
+        ctx.fillStyle = "#111111";
+        ctx.font = "700 34px Avenir Next, Arial, sans-serif";
+        ctx.fillText(value, 704, rightY + 62);
+        rightY += 146;
+      });
+
+      drawRoundRect(ctx, 674, 1250, 442, 180, 24, "#111111", null);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 22px Avenir Next, Arial, sans-serif";
+      ctx.fillText("Timeline Readout", 704, 1300);
+      ctx.font = "400 22px Avenir Next, Arial, sans-serif";
+      drawWrappedText(
+        ctx,
+        `Based on the current inputs, the recommended target go-live is ${document.getElementById("pdfGoLive").textContent}.`,
+        704,
+        1348,
+        380,
+        32,
+        "rgba(255,255,255,0.82)"
+      );
+
+      if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
+        drawRoundRect(ctx, 90, 1510, width - 180, 110, 24, "#f1e2d4", null);
+        ctx.fillStyle = "#8f4e21";
+        ctx.font = "700 18px Avenir Next, Arial, sans-serif";
+        ctx.fillText("Timeline Consideration", 124, 1560);
+        ctx.fillStyle = "#51331b";
+        ctx.font = "400 20px Avenir Next, Arial, sans-serif";
+        drawWrappedText(
+          ctx,
+          "Undocumented processes can extend timelines on average of two weeks.",
+          124,
+          1598,
+          width - 248,
+          28,
+          "#51331b"
+        );
+      }
+
+      ctx.fillStyle = "#8b857d";
+      ctx.font = "400 16px Avenir Next, Arial, sans-serif";
+      ctx.fillText(`Prepared ${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`, 90, height - 92);
+
+      const jpegUrl = canvas.toDataURL("image/jpeg", 0.92);
+      const jpegBinary = jpegDataUrlToBinary(jpegUrl);
+      const imageWidth = 612;
+      const imageHeight = (height / width) * imageWidth;
+
       const objects = [
         "<< /Type /Catalog /Pages 2 0 R >>",
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>`,
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 ${imageHeight.toFixed(2)}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`,
+        `<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBinary.length} >>\nstream\n${jpegBinary}\nendstream`,
+        `<< /Length 38 >>\nstream\nq\n612 0 0 ${imageHeight.toFixed(2)} 0 0 cm\n/Im0 Do\nQ\nendstream`
       ];
 
       let pdf = "%PDF-1.4\n";
