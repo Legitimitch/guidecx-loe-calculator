@@ -9,7 +9,7 @@
     :root {
       --bg: #f6f3ee;
       --paper: #fffdfa;
-      --paper-2: #f2efe9;
+      --paper-2: #f2eee9;
       --ink: #090909;
       --muted: #66625d;
       --line: #d6d1ca;
@@ -254,10 +254,6 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .field-grid.three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
     .full {
       grid-column: 1 / -1;
     }
@@ -420,23 +416,33 @@
       font-size: inherit;
     }
 
+    .summary-callout {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #111111;
+      color: white;
+    }
+
+    .summary-callout h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .summary-callout p {
+      color: rgba(255, 255, 255, 0.76);
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
     .footer-note {
       color: var(--muted);
       line-height: 1.55;
       font-size: 0.9rem;
     }
 
-    .deploy-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.55;
-    }
-
-    .deploy-list strong {
-      color: var(--ink);
+    .pdf-sheet {
+      display: none;
     }
 
     @media (max-width: 980px) {
@@ -460,13 +466,107 @@
         padding: 18px;
       }
 
-      .field-grid,
-      .field-grid.three {
+      .field-grid {
         grid-template-columns: 1fr;
       }
 
       .hero h1 {
         max-width: 14ch;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .page-shell {
+        display: none;
+      }
+
+      .pdf-sheet {
+        display: block;
+        padding: 34px;
+        color: #111111;
+      }
+
+      .pdf-brand {
+        width: 420px;
+        max-width: 100%;
+        margin-bottom: 28px;
+      }
+
+      .pdf-kicker {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        border: 1px solid #d6d1ca;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #66625d;
+      }
+
+      .pdf-sheet h1 {
+        font-size: 34px;
+        line-height: 1;
+        letter-spacing: -0.04em;
+        margin-bottom: 10px;
+      }
+
+      .pdf-sheet p {
+        color: #66625d;
+        line-height: 1.55;
+        font-size: 14px;
+      }
+
+      .pdf-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin: 28px 0;
+      }
+
+      .pdf-card {
+        border: 1px solid #d6d1ca;
+        border-radius: 18px;
+        padding: 16px;
+        background: #faf8f4;
+      }
+
+      .pdf-card span {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #66625d;
+        font-weight: 700;
+      }
+
+      .pdf-card strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 28px;
+        letter-spacing: -0.04em;
+      }
+
+      .pdf-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      .pdf-table td {
+        padding: 12px 0;
+        border-top: 1px solid #e6e0d9;
+        font-size: 14px;
+      }
+
+      .pdf-table td:last-child {
+        text-align: right;
+        font-weight: 700;
+        color: #111111;
       }
     }
   </style>
@@ -483,18 +583,19 @@
           <div class="eyebrow">Directional Estimate Tool</div>
           <h1>Build a clean, shareable GUIDEcx launch estimate.</h1>
           <p>
-            Use this calculator to frame implementation and onboarding effort for GUIDEcx. It is intentionally designed for directional planning,
-            not exact scoping, so the assumptions stay visible and easy to tune before you share the estimate.
+            This version follows your live estimating logic more closely: task build effort is calculated from task volume,
+            process maturity adds a fixed template adjustment, integrations use fixed values, and go-live is projected from today.
           </p>
           <div class="hero-meta">
-            <div class="meta-chip">Static site, ready for public hosting</div>
             <div class="meta-chip">Shareable via encoded URL</div>
-            <div class="meta-chip">Branded from your provided reference</div>
+            <div class="meta-chip">Customer-facing PDF export</div>
+            <div class="meta-chip">Formula-driven and lightweight</div>
           </div>
         </div>
 
         <div class="hero-actions">
           <button class="button primary" id="copyLinkButton" type="button">Copy Share Link</button>
+          <button class="button secondary" id="downloadPdfButton" type="button">Download Summary PDF</button>
           <button class="button secondary" id="saveButton" type="button">Save Progress</button>
           <button class="button secondary" id="resetButton" type="button">Reset Inputs</button>
         </div>
@@ -508,51 +609,35 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Project Setup</h2>
-            <p class="panel-copy">Capture the customer context first so the estimate is immediately ready to review or share.</p>
+            <p class="panel-copy">Use the few inputs that directly drive the estimate. Project ID and project name have been removed from the customer-facing form.</p>
           </div>
 
           <div class="field-grid">
-            <label>
-              Project ID
-              <input id="projectId" name="projectId" type="text" placeholder="EX-1024">
-            </label>
-
-            <label>
-              Project Name
-              <input id="projectName" name="projectName" type="text" placeholder="Enterprise Rollout">
-            </label>
-
             <label>
               Process Type
               <select id="processType" name="processType">
                 <option value="documented">Documented</option>
                 <option value="undocumented">Undocumented</option>
-                <option value="other">Other</option>
               </select>
-              <span class="field-help">Use the type that best reflects how much definition already exists.</span>
+              <span class="field-help">Documented adds 0 template weeks. Undocumented adds 2 template weeks.</span>
             </label>
 
-            <label id="processOtherWrap" hidden>
-              Process Type Notes
-              <input id="processOther" name="processOther" type="text" placeholder="Describe the process">
+            <label>
+              Total Tasks
+              <input id="totalTasks" name="totalTasks" type="number" min="0" step="1" value="1">
+              <span class="field-help">Building tasks formula: ((total tasks * 7) / 60) + 4</span>
+            </label>
+
+            <label>
+              Weekly Hours for Template Build
+              <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0.1" step="0.1" value="10">
+              <span class="field-help">Used to convert building-task hours into template-build weeks.</span>
             </label>
 
             <label>
               Total Teams
               <input id="teams" name="teams" type="number" min="0" step="1" value="1">
-              <span class="field-help">How many teams must build their own process and complete training?</span>
-            </label>
-
-            <label>
-              Total Processes
-              <input id="totalProcesses" name="totalProcesses" type="number" min="0" step="1" value="1">
-              <span class="field-help">How many processes need to be built to launch projects?</span>
-            </label>
-
-            <label class="full">
-              Total Tasks
-              <input id="totalTasks" name="totalTasks" type="number" min="0" step="1" value="1">
-              <span class="field-help">Use a ballpark task count. This drives the template building estimate.</span>
+              <span class="field-help">Shown in the export summary for context, but not used in the current formula set you provided.</span>
             </label>
           </div>
         </section>
@@ -560,7 +645,7 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Critical Integrations</h2>
-            <p class="panel-copy">Choose only the integrations required at go-live. The hours behind each option can be tuned below.</p>
+            <p class="panel-copy">Each selected integration contributes a fixed value directly to the integration timeline.</p>
           </div>
 
           <div class="chip-grid" id="integrationChecks"></div>
@@ -569,12 +654,7 @@
             <label class="full" id="integrationOtherWrap" hidden>
               Other Integration
               <input id="integrationOther" name="integrationOther" type="text" placeholder="Name the additional integration">
-            </label>
-
-            <label>
-              Weekly Hours for Integration Work
-              <input id="integrationWeeklyHours" name="integrationWeeklyHours" type="number" min="0" step="1" value="0">
-              <span class="field-help">If no integrations are needed, leave this at 0.</span>
+              <span class="field-help">Other integrations are listed in the summary but currently add 0 unless you want a fixed value assigned later.</span>
             </label>
           </div>
         </section>
@@ -582,7 +662,7 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Additional Features</h2>
-            <p class="panel-copy">Include only launch-critical features so the estimate stays lean and useful.</p>
+            <p class="panel-copy">These remain optional reference fields in the form and summary. They do not affect the current estimate unless you want to add feature logic later.</p>
           </div>
 
           <div class="chip-grid" id="featureChecks"></div>
@@ -594,111 +674,13 @@
             </label>
           </div>
         </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h2>Weekly Work Commitment</h2>
-            <p class="panel-copy">These are the weekly hours your team can realistically commit to templates and integrations.</p>
-          </div>
-
-          <div class="field-grid">
-            <label>
-              Weekly Hours for Template Build
-              <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0" step="1" value="10">
-            </label>
-
-            <label>
-              Target Go-Live Date
-              <input id="goLiveDate" name="goLiveDate" type="date">
-            </label>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h2>Estimation Assumptions</h2>
-            <p class="panel-copy">The original form logic did not specify all effort factors, so this section keeps those assumptions explicit and editable.</p>
-          </div>
-
-          <div class="field-grid three">
-            <label>
-              Hours per Task
-              <input id="hoursPerTask" name="hoursPerTask" type="number" min="0" step="0.1" value="4.1">
-            </label>
-
-            <label>
-              Documented Process Hours
-              <input id="documentedProcessHours" name="documentedProcessHours" type="number" min="0" step="0.5" value="2">
-            </label>
-
-            <label>
-              Undocumented Process Hours
-              <input id="undocumentedProcessHours" name="undocumentedProcessHours" type="number" min="0" step="0.5" value="6">
-            </label>
-
-            <label>
-              Other Process Hours
-              <input id="otherProcessHours" name="otherProcessHours" type="number" min="0" step="0.5" value="4">
-            </label>
-
-            <label>
-              Team Enablement Hours
-              <input id="teamEnablementHours" name="teamEnablementHours" type="number" min="0" step="0.5" value="3">
-            </label>
-
-            <label>
-              Salesforce Hours
-              <input id="integrationSalesforce" name="integrationSalesforce" type="number" min="0" step="0.5" value="18">
-            </label>
-
-            <label>
-              HubSpot Hours
-              <input id="integrationHubspot" name="integrationHubspot" type="number" min="0" step="0.5" value="12">
-            </label>
-
-            <label>
-              Jira Hours
-              <input id="integrationJira" name="integrationJira" type="number" min="0" step="0.5" value="10">
-            </label>
-
-            <label>
-              Slack Hours
-              <input id="integrationSlack" name="integrationSlack" type="number" min="0" step="0.5" value="6">
-            </label>
-
-            <label>
-              Gainsight Hours
-              <input id="integrationGainsight" name="integrationGainsight" type="number" min="0" step="0.5" value="14">
-            </label>
-
-            <label>
-              Other Integration Hours
-              <input id="integrationOtherHours" name="integrationOtherHours" type="number" min="0" step="0.5" value="8">
-            </label>
-
-            <label>
-              Time Tracking Hours
-              <input id="featureTimeTracking" name="featureTimeTracking" type="number" min="0" step="0.5" value="6">
-            </label>
-
-            <label>
-              Resource Management Hours
-              <input id="featureResourceManagement" name="featureResourceManagement" type="number" min="0" step="0.5" value="8">
-            </label>
-
-            <label>
-              Other Feature Hours
-              <input id="featureOtherHours" name="featureOtherHours" type="number" min="0" step="0.5" value="4">
-            </label>
-          </div>
-        </section>
       </main>
 
       <aside class="summary summary-stack">
         <section class="panel">
           <div class="summary-head">
             <h2>Estimate Summary</h2>
-            <p>Template build and integration work are calculated separately, then combined into a practical readiness window.</p>
+            <p>The calculator now mirrors the logic you outlined: building tasks convert to template weeks, integrations total fixed values, and projected go-live is based on today.</p>
           </div>
 
           <div class="summary-grid">
@@ -707,65 +689,86 @@
               <strong id="buildingTasksHours">0.0 hrs</strong>
             </div>
             <div class="metric">
-              <span>Building Integrations</span>
-              <strong id="buildingIntegrationsHours">0.0 hrs</strong>
-            </div>
-            <div class="metric">
               <span>Template Build</span>
               <strong id="templateWeeks">0.0 weeks</strong>
             </div>
             <div class="metric">
-              <span>Integration Build</span>
-              <strong id="integrationWeeks">0.0 weeks</strong>
+              <span>Building Integrations</span>
+              <strong id="buildingIntegrationsValue">0.0 weeks</strong>
             </div>
             <div class="metric">
-              <span>Total Readiness Window</span>
-              <strong id="overallWeeks">0.0 weeks</strong>
-            </div>
-            <div class="metric">
-              <span>Recommended Start Date</span>
-              <strong id="finishDate">TBD</strong>
+              <span>Projected Go-Live</span>
+              <strong id="goLiveDateDisplay">TBD</strong>
             </div>
           </div>
 
           <div class="formula">
-            Template estimate = (building tasks + process effort + team enablement + critical features) / weekly template hours<br>
-            Integration estimate = building integrations / weekly integration hours<br>
-            Final readiness window = whichever track takes longer
+            Building Tasks = ((Total Tasks * 7) / 60) + 4<br>
+            Template Build = (Building Tasks / Weekly Template Hours) + Process Value<br>
+            Integrations = Sum of selected integration values<br>
+            Go-Live = Today + (Template Build * 7 days)
           </div>
 
           <div class="breakdown">
-            <div class="breakdown-row"><span>Process effort</span><strong id="processHours">0.0 hrs</strong></div>
-            <div class="breakdown-row"><span>Team enablement</span><strong id="teamHours">0.0 hrs</strong></div>
-            <div class="breakdown-row"><span>Critical features</span><strong id="featureHours">0.0 hrs</strong></div>
-            <div class="breakdown-row"><span>Total template hours</span><strong id="templateHours">0.0 hrs</strong></div>
-            <div class="breakdown-row"><span>Total overall hours</span><strong id="totalHours">0.0 hrs</strong></div>
-            <div class="breakdown-row"><span>Template days</span><strong id="templateDays">0 days</strong></div>
+            <div class="breakdown-row"><span>Process value</span><strong id="processValue">0.0 weeks</strong></div>
+            <div class="breakdown-row"><span>Template build days</span><strong id="templateDays">0 days</strong></div>
             <div class="breakdown-row"><span>Integration days</span><strong id="integrationDays">0 days</strong></div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h2>Hosting Ready</h2>
-            <p class="panel-copy">This project is set up as a static site, so it can be published quickly on common no-backend hosts.</p>
+            <div class="breakdown-row"><span>Selected integrations</span><strong id="selectedIntegrations">None</strong></div>
+            <div class="breakdown-row"><span>Additional features</span><strong id="selectedFeatures">None</strong></div>
           </div>
 
-          <div class="deploy-list">
-            <div><strong>Netlify:</strong> drag this folder into a new site or connect a repo and publish.</div>
-            <div><strong>Vercel:</strong> import the folder or repo as a static project.</div>
-            <div><strong>GitHub Pages:</strong> serve the root of the repository as a static site.</div>
+          <div class="summary-callout">
+            <h3>PDF export</h3>
+            <p>The summary PDF is designed to be clean and customer-facing. It prints only the branded summary sheet, not the full working form.</p>
           </div>
         </section>
 
         <section class="panel">
           <p class="footer-note">
-            This estimate is directional by design. If your implementation team wants a different model, update the assumptions instead of hiding effort in the calculation.
+            Current assumptions used exactly as provided: Salesforce 2, HubSpot 2, Jira 4, Slack 1, Gainsight 4, N/A 0, Documented process 0, and Undocumented process 2.
           </p>
         </section>
       </aside>
     </div>
   </div>
+
+  <section class="pdf-sheet" id="pdfSheet">
+    <img class="pdf-brand" src="assets/guidecx-loe-brand.png" alt="GUIDEcx LOE Calculator branding">
+    <div class="pdf-kicker">Directional Estimate Summary</div>
+    <h1>GUIDEcx implementation estimate</h1>
+    <p>
+      This estimate is intended for planning and alignment. It reflects current task volume, process maturity, and critical integrations required for go-live.
+    </p>
+
+    <div class="pdf-grid">
+      <div class="pdf-card">
+        <span>Building Tasks</span>
+        <strong id="pdfBuildingTasks">0.0 hrs</strong>
+      </div>
+      <div class="pdf-card">
+        <span>Template Build</span>
+        <strong id="pdfTemplateWeeks">0.0 weeks</strong>
+      </div>
+      <div class="pdf-card">
+        <span>Integrations</span>
+        <strong id="pdfIntegrationWeeks">0.0 weeks</strong>
+      </div>
+      <div class="pdf-card">
+        <span>Projected Go-Live</span>
+        <strong id="pdfGoLive">TBD</strong>
+      </div>
+    </div>
+
+    <table class="pdf-table">
+      <tr><td>Process type</td><td id="pdfProcessType">Documented</td></tr>
+      <tr><td>Total teams</td><td id="pdfTeams">1</td></tr>
+      <tr><td>Total tasks</td><td id="pdfTasks">1</td></tr>
+      <tr><td>Selected integrations</td><td id="pdfIntegrations">None</td></tr>
+      <tr><td>Additional features</td><td id="pdfFeatures">None</td></tr>
+      <tr><td>Template build days</td><td id="pdfTemplateDays">0 days</td></tr>
+      <tr><td>Integration days</td><td id="pdfIntegrationDays">0 days</td></tr>
+    </table>
+  </section>
 
   <script>
     const integrationOptions = [
@@ -785,39 +788,33 @@
     ];
 
     const fieldIds = [
-      "projectId",
-      "projectName",
       "processType",
-      "processOther",
-      "teams",
-      "totalProcesses",
       "totalTasks",
-      "integrationWeeklyHours",
       "templateWeeklyHours",
-      "goLiveDate",
-      "hoursPerTask",
-      "documentedProcessHours",
-      "undocumentedProcessHours",
-      "otherProcessHours",
-      "teamEnablementHours",
-      "integrationSalesforce",
-      "integrationHubspot",
-      "integrationJira",
-      "integrationSlack",
-      "integrationGainsight",
-      "integrationOtherHours",
-      "featureTimeTracking",
-      "featureResourceManagement",
-      "featureOtherHours",
+      "teams",
       "integrationOther",
       "featureOther"
     ];
 
     const storageKey = "guidecx-loe-calculator";
     const statusEl = document.getElementById("statusMessage");
-    const processOtherWrap = document.getElementById("processOtherWrap");
     const integrationOtherWrap = document.getElementById("integrationOtherWrap");
     const featureOtherWrap = document.getElementById("featureOtherWrap");
+
+    const integrationValues = {
+      salesforce: 2,
+      hubspot: 2,
+      jira: 4,
+      slack: 1,
+      gainsight: 4,
+      na: 0,
+      other: 0
+    };
+
+    const processValues = {
+      documented: 0,
+      undocumented: 2
+    };
 
     function buildChecks(containerId, groupName, options) {
       const container = document.getElementById(containerId);
@@ -834,13 +831,6 @@
 
     buildChecks("integrationChecks", "integrations", integrationOptions);
     buildChecks("featureChecks", "features", featureOptions);
-
-    function todayLocal() {
-      const now = new Date();
-      const offset = now.getTimezoneOffset();
-      const local = new Date(now.getTime() - offset * 60 * 1000);
-      return local.toISOString().slice(0, 10);
-    }
 
     function selectedValues(name) {
       return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((input) => input.value);
@@ -867,33 +857,12 @@
       return `${Math.round(value)} days`;
     }
 
-    function integrationHoursFor(key) {
-      const map = {
-        salesforce: num("integrationSalesforce"),
-        hubspot: num("integrationHubspot"),
-        jira: num("integrationJira"),
-        slack: num("integrationSlack"),
-        gainsight: num("integrationGainsight"),
-        other: num("integrationOtherHours"),
-        na: 0
-      };
-      return map[key] || 0;
-    }
-
-    function featureHoursFor(key) {
-      const map = {
-        timeTracking: num("featureTimeTracking"),
-        resourceManagement: num("featureResourceManagement"),
-        other: num("featureOtherHours")
-      };
-      return map[key] || 0;
-    }
-
-    function processHoursPerProcess() {
-      const type = document.getElementById("processType").value;
-      if (type === "documented") return num("documentedProcessHours");
-      if (type === "undocumented") return num("undocumentedProcessHours");
-      return num("otherProcessHours");
+    function formatDate(date) {
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
     }
 
     function getState() {
@@ -908,6 +877,7 @@
 
     function applyState(state) {
       if (!state) return;
+
       fieldIds.forEach((id) => {
         if (state[id] !== undefined) {
           document.getElementById(id).value = state[id];
@@ -938,62 +908,6 @@
       }
     }
 
-    function toggleConditionalFields() {
-      processOtherWrap.hidden = document.getElementById("processType").value !== "other";
-      integrationOtherWrap.hidden = !selectedValues("integrations").includes("other");
-      featureOtherWrap.hidden = !selectedValues("features").includes("other");
-    }
-
-    function calculate() {
-      toggleConditionalFields();
-
-      const buildingTasks = num("totalTasks") * num("hoursPerTask");
-      const processHours = num("totalProcesses") * processHoursPerProcess();
-      const teamHours = num("teams") * num("teamEnablementHours");
-      const featureHours = selectedValues("features").reduce((sum, key) => sum + featureHoursFor(key), 0);
-
-      let integrations = selectedValues("integrations");
-      if (integrations.includes("na")) integrations = ["na"];
-      const buildingIntegrations = integrations.reduce((sum, key) => sum + integrationHoursFor(key), 0);
-
-      const templateHours = buildingTasks + processHours + teamHours + featureHours;
-      const totalHours = templateHours + buildingIntegrations;
-      const templateWeeklyHours = num("templateWeeklyHours");
-      const integrationWeeklyHours = num("integrationWeeklyHours");
-
-      const templateWeeks = templateWeeklyHours > 0 ? templateHours / templateWeeklyHours : 0;
-      const integrationWeeks = integrationWeeklyHours > 0 ? buildingIntegrations / integrationWeeklyHours : 0;
-      const overallWeeks = Math.max(templateWeeks, integrationWeeks);
-      const templateDays = templateWeeks * 5;
-      const integrationDays = integrationWeeks * 5;
-
-      const goLiveDate = document.getElementById("goLiveDate").value;
-      let startDate = "TBD";
-      if (goLiveDate && Number.isFinite(overallWeeks)) {
-        const target = new Date(`${goLiveDate}T12:00:00`);
-        target.setDate(target.getDate() - Math.round(overallWeeks * 7));
-        startDate = target.toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric"
-        });
-      }
-
-      document.getElementById("buildingTasksHours").textContent = formatHours(buildingTasks);
-      document.getElementById("buildingIntegrationsHours").textContent = formatHours(buildingIntegrations);
-      document.getElementById("templateWeeks").textContent = formatWeeks(templateWeeks);
-      document.getElementById("integrationWeeks").textContent = formatWeeks(integrationWeeks);
-      document.getElementById("overallWeeks").textContent = formatWeeks(overallWeeks);
-      document.getElementById("finishDate").textContent = startDate;
-      document.getElementById("processHours").textContent = formatHours(processHours);
-      document.getElementById("teamHours").textContent = formatHours(teamHours);
-      document.getElementById("featureHours").textContent = formatHours(featureHours);
-      document.getElementById("templateHours").textContent = formatHours(templateHours);
-      document.getElementById("totalHours").textContent = formatHours(totalHours);
-      document.getElementById("templateDays").textContent = formatDays(templateDays);
-      document.getElementById("integrationDays").textContent = formatDays(integrationDays);
-    }
-
     function setStatus(message) {
       statusEl.textContent = message;
       window.clearTimeout(setStatus.timer);
@@ -1001,6 +915,79 @@
         statusEl.textContent = "";
       }, 2600);
     }
+
+    function toggleConditionalFields() {
+      integrationOtherWrap.hidden = !selectedValues("integrations").includes("other");
+      featureOtherWrap.hidden = !selectedValues("features").includes("other");
+    }
+
+    function labelForValue(name, value) {
+      const source = name === "integrations" ? integrationOptions : featureOptions;
+      const match = source.find((item) => item[0] === value);
+      if (!match) return value;
+      if (value === "other") {
+        const otherValue = document.getElementById(name === "integrations" ? "integrationOther" : "featureOther").value.trim();
+        return otherValue || "Other";
+      }
+      return match[1];
+    }
+
+    function joinedLabels(name) {
+      const values = selectedValues(name);
+      if (values.length === 0) return "None";
+      return values.map((value) => labelForValue(name, value)).join(", ");
+    }
+
+    function calculate() {
+      toggleConditionalFields();
+
+      const totalTasks = num("totalTasks");
+      const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0.1);
+      const processType = document.getElementById("processType").value;
+      const processValue = processValues[processType] || 0;
+
+      const buildingTasksHours = ((totalTasks * 7) / 60) + 4;
+      const templateWeeks = (buildingTasksHours / weeklyTemplateHours) + processValue;
+
+      let integrations = selectedValues("integrations");
+      if (integrations.includes("na")) integrations = ["na"];
+      const integrationWeeks = integrations.reduce((sum, key) => sum + (integrationValues[key] || 0), 0);
+
+      const templateDays = templateWeeks * 7;
+      const integrationDays = integrationWeeks * 7;
+
+      const projectedGoLive = new Date();
+      projectedGoLive.setHours(12, 0, 0, 0);
+      projectedGoLive.setDate(projectedGoLive.getDate() + Math.round(templateDays));
+
+      const selectedIntegrationLabels = integrations.length ? integrations.map((value) => labelForValue("integrations", value)).join(", ") : "None";
+      const selectedFeatureLabels = joinedLabels("features");
+
+      document.getElementById("buildingTasksHours").textContent = formatHours(buildingTasksHours);
+      document.getElementById("templateWeeks").textContent = formatWeeks(templateWeeks);
+      document.getElementById("buildingIntegrationsValue").textContent = formatWeeks(integrationWeeks);
+      document.getElementById("goLiveDateDisplay").textContent = formatDate(projectedGoLive);
+      document.getElementById("processValue").textContent = formatWeeks(processValue);
+      document.getElementById("templateDays").textContent = formatDays(templateDays);
+      document.getElementById("integrationDays").textContent = formatDays(integrationDays);
+      document.getElementById("selectedIntegrations").textContent = selectedIntegrationLabels;
+      document.getElementById("selectedFeatures").textContent = selectedFeatureLabels;
+
+      document.getElementById("pdfBuildingTasks").textContent = formatHours(buildingTasksHours);
+      document.getElementById("pdfTemplateWeeks").textContent = formatWeeks(templateWeeks);
+      document.getElementById("pdfIntegrationWeeks").textContent = formatWeeks(integrationWeeks);
+      document.getElementById("pdfGoLive").textContent = formatDate(projectedGoLive);
+      document.getElementById("pdfProcessType").textContent = processType === "documented" ? "Documented" : "Undocumented";
+      document.getElementById("pdfTeams").textContent = String(num("teams"));
+      document.getElementById("pdfTasks").textContent = String(totalTasks);
+      document.getElementById("pdfIntegrations").textContent = selectedIntegrationLabels;
+      document.getElementById("pdfFeatures").textContent = selectedFeatureLabels;
+      document.getElementById("pdfTemplateDays").textContent = formatDays(templateDays);
+      document.getElementById("pdfIntegrationDays").textContent = formatDays(integrationDays);
+    }
+
+    document.addEventListener("input", calculate);
+    document.addEventListener("change", calculate);
 
     document.getElementById("copyLinkButton").addEventListener("click", async () => {
       const shareUrl = new URL(window.location.href);
@@ -1013,6 +1000,11 @@
       }
     });
 
+    document.getElementById("downloadPdfButton").addEventListener("click", () => {
+      calculate();
+      window.print();
+    });
+
     document.getElementById("saveButton").addEventListener("click", () => {
       window.localStorage.setItem(storageKey, JSON.stringify(getState()));
       setStatus("Inputs saved on this device.");
@@ -1023,13 +1015,6 @@
       window.location.hash = "";
       window.location.reload();
     });
-
-    document.addEventListener("input", calculate);
-    document.addEventListener("change", calculate);
-
-    if (!document.getElementById("goLiveDate").value) {
-      document.getElementById("goLiveDate").value = todayLocal();
-    }
 
     const hashState = window.location.hash.slice(1) ? decodeState(window.location.hash.slice(1)) : null;
     const savedState = window.localStorage.getItem(storageKey);
