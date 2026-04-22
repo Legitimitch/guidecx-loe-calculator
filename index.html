@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Estimate GUIDEcx implementation and onboarding effort with a shareable LOE calculator.">
+  <title>GUIDEcx | LOE Calculator</title>
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --paper: #fffdfa;
+      --paper-2: #f2efe9;
+      --ink: #090909;
+      --muted: #66625d;
+      --line: #d6d1ca;
+      --line-strong: #b7b1a9;
+      --accent: #111111;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --content: min(1240px, calc(100% - 32px));
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
+        linear-gradient(135deg, #fbfaf7 0%, #f3f0eb 58%, #ece8e1 100%);
+      min-height: 100vh;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .page-shell {
+      width: var(--content);
+      margin: 24px auto 40px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 248, 244, 0.96)),
+        var(--paper);
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .hero::before {
+      width: 420px;
+      height: 420px;
+      right: -140px;
+      top: -190px;
+      background: radial-gradient(circle, rgba(0, 0, 0, 0.06), transparent 68%);
+    }
+
+    .hero::after {
+      width: 360px;
+      height: 360px;
+      left: -180px;
+      bottom: -220px;
+      background: radial-gradient(circle, rgba(0, 0, 0, 0.04), transparent 72%);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 22px;
+    }
+
+    .brand-lockup {
+      width: min(760px, 100%);
+      background: white;
+      border-radius: 20px;
+      padding: 18px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 10px;
+      max-width: 860px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.25rem, 5vw, 4.6rem);
+      line-height: 0.93;
+      letter-spacing: -0.05em;
+      max-width: 12ch;
+    }
+
+    .hero p {
+      max-width: 66ch;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .meta-chip {
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    }
+
+    .button.secondary {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .status {
+      min-height: 1.4rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .stack,
+    .summary-stack {
+      display: grid;
+      gap: 20px;
+    }
+
+    .panel {
+      background: rgba(255, 253, 250, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .panel h2 {
+      font-size: 1.12rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-copy {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .field-grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-size: 0.93rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .field-help {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      padding: 13px 14px;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--line-strong);
+      box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+      background: white;
+    }
+
+    .chip-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    }
+
+    .choice {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.82);
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+      cursor: pointer;
+    }
+
+    .choice:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: white;
+    }
+
+    .choice input {
+      width: auto;
+      margin: 0;
+    }
+
+    .choice span {
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .summary {
+      position: sticky;
+      top: 22px;
+    }
+
+    .summary-head {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .summary-head h2 {
+      font-size: 1.4rem;
+      letter-spacing: -0.03em;
+    }
+
+    .summary-head p {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric {
+      border-radius: 18px;
+      padding: 16px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 242, 236, 0.98)),
+        white;
+      border: 1px solid var(--line);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .formula {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(180deg, #f8f6f1, #f2eee8);
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.92rem;
+    }
+
+    .breakdown {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(214, 209, 202, 0.68);
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .breakdown-row:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .breakdown-row strong {
+      color: var(--ink);
+      font-size: inherit;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+
+    .deploy-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .deploy-list strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page-shell {
+        width: min(100% - 20px, 1240px);
+        margin: 14px auto 28px;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+      }
+
+      .field-grid,
+      .field-grid.three {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        max-width: 14ch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="brand-lockup">
+          <img src="assets/guidecx-loe-brand.png" alt="GUIDEcx LOE Calculator branding">
+        </div>
+
+        <div class="hero-copy">
+          <div class="eyebrow">Directional Estimate Tool</div>
+          <h1>Build a clean, shareable GUIDEcx launch estimate.</h1>
+          <p>
+            Use this calculator to frame implementation and onboarding effort for GUIDEcx. It is intentionally designed for directional planning,
+            not exact scoping, so the assumptions stay visible and easy to tune before you share the estimate.
+          </p>
+          <div class="hero-meta">
+            <div class="meta-chip">Static site, ready for public hosting</div>
+            <div class="meta-chip">Shareable via encoded URL</div>
+            <div class="meta-chip">Branded from your provided reference</div>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <button class="button primary" id="copyLinkButton" type="button">Copy Share Link</button>
+          <button class="button secondary" id="saveButton" type="button">Save Progress</button>
+          <button class="button secondary" id="resetButton" type="button">Reset Inputs</button>
+        </div>
+
+        <div class="status" id="statusMessage" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <main class="stack">
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Project Setup</h2>
+            <p class="panel-copy">Capture the customer context first so the estimate is immediately ready to review or share.</p>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              Project ID
+              <input id="projectId" name="projectId" type="text" placeholder="EX-1024">
+            </label>
+
+            <label>
+              Project Name
+              <input id="projectName" name="projectName" type="text" placeholder="Enterprise Rollout">
+            </label>
+
+            <label>
+              Process Type
+              <select id="processType" name="processType">
+                <option value="documented">Documented</option>
+                <option value="undocumented">Undocumented</option>
+                <option value="other">Other</option>
+              </select>
+              <span class="field-help">Use the type that best reflects how much definition already exists.</span>
+            </label>
+
+            <label id="processOtherWrap" hidden>
+              Process Type Notes
+              <input id="processOther" name="processOther" type="text" placeholder="Describe the process">
+            </label>
+
+            <label>
+              Total Teams
+              <input id="teams" name="teams" type="number" min="0" step="1" value="1">
+              <span class="field-help">How many teams must build their own process and complete training?</span>
+            </label>
+
+            <label>
+              Total Processes
+              <input id="totalProcesses" name="totalProcesses" type="number" min="0" step="1" value="1">
+              <span class="field-help">How many processes need to be built to launch projects?</span>
+            </label>
+
+            <label class="full">
+              Total Tasks
+              <input id="totalTasks" name="totalTasks" type="number" min="0" step="1" value="1">
+              <span class="field-help">Use a ballpark task count. This drives the template building estimate.</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Critical Integrations</h2>
+            <p class="panel-copy">Choose only the integrations required at go-live. The hours behind each option can be tuned below.</p>
+          </div>
+
+          <div class="chip-grid" id="integrationChecks"></div>
+
+          <div class="field-grid" style="margin-top: 16px;">
+            <label class="full" id="integrationOtherWrap" hidden>
+              Other Integration
+              <input id="integrationOther" name="integrationOther" type="text" placeholder="Name the additional integration">
+            </label>
+
+            <label>
+              Weekly Hours for Integration Work
+              <input id="integrationWeeklyHours" name="integrationWeeklyHours" type="number" min="0" step="1" value="0">
+              <span class="field-help">If no integrations are needed, leave this at 0.</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Additional Features</h2>
+            <p class="panel-copy">Include only launch-critical features so the estimate stays lean and useful.</p>
+          </div>
+
+          <div class="chip-grid" id="featureChecks"></div>
+
+          <div class="field-grid" style="margin-top: 16px;">
+            <label class="full" id="featureOtherWrap" hidden>
+              Other Feature
+              <input id="featureOther" name="featureOther" type="text" placeholder="Name the additional feature">
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Weekly Work Commitment</h2>
+            <p class="panel-copy">These are the weekly hours your team can realistically commit to templates and integrations.</p>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              Weekly Hours for Template Build
+              <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0" step="1" value="10">
+            </label>
+
+            <label>
+              Target Go-Live Date
+              <input id="goLiveDate" name="goLiveDate" type="date">
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Estimation Assumptions</h2>
+            <p class="panel-copy">The original form logic did not specify all effort factors, so this section keeps those assumptions explicit and editable.</p>
+          </div>
+
+          <div class="field-grid three">
+            <label>
+              Hours per Task
+              <input id="hoursPerTask" name="hoursPerTask" type="number" min="0" step="0.1" value="4.1">
+            </label>
+
+            <label>
+              Documented Process Hours
+              <input id="documentedProcessHours" name="documentedProcessHours" type="number" min="0" step="0.5" value="2">
+            </label>
+
+            <label>
+              Undocumented Process Hours
+              <input id="undocumentedProcessHours" name="undocumentedProcessHours" type="number" min="0" step="0.5" value="6">
+            </label>
+
+            <label>
+              Other Process Hours
+              <input id="otherProcessHours" name="otherProcessHours" type="number" min="0" step="0.5" value="4">
+            </label>
+
+            <label>
+              Team Enablement Hours
+              <input id="teamEnablementHours" name="teamEnablementHours" type="number" min="0" step="0.5" value="3">
+            </label>
+
+            <label>
+              Salesforce Hours
+              <input id="integrationSalesforce" name="integrationSalesforce" type="number" min="0" step="0.5" value="18">
+            </label>
+
+            <label>
+              HubSpot Hours
+              <input id="integrationHubspot" name="integrationHubspot" type="number" min="0" step="0.5" value="12">
+            </label>
+
+            <label>
+              Jira Hours
+              <input id="integrationJira" name="integrationJira" type="number" min="0" step="0.5" value="10">
+            </label>
+
+            <label>
+              Slack Hours
+              <input id="integrationSlack" name="integrationSlack" type="number" min="0" step="0.5" value="6">
+            </label>
+
+            <label>
+              Gainsight Hours
+              <input id="integrationGainsight" name="integrationGainsight" type="number" min="0" step="0.5" value="14">
+            </label>
+
+            <label>
+              Other Integration Hours
+              <input id="integrationOtherHours" name="integrationOtherHours" type="number" min="0" step="0.5" value="8">
+            </label>
+
+            <label>
+              Time Tracking Hours
+              <input id="featureTimeTracking" name="featureTimeTracking" type="number" min="0" step="0.5" value="6">
+            </label>
+
+            <label>
+              Resource Management Hours
+              <input id="featureResourceManagement" name="featureResourceManagement" type="number" min="0" step="0.5" value="8">
+            </label>
+
+            <label>
+              Other Feature Hours
+              <input id="featureOtherHours" name="featureOtherHours" type="number" min="0" step="0.5" value="4">
+            </label>
+          </div>
+        </section>
+      </main>
+
+      <aside class="summary summary-stack">
+        <section class="panel">
+          <div class="summary-head">
+            <h2>Estimate Summary</h2>
+            <p>Template build and integration work are calculated separately, then combined into a practical readiness window.</p>
+          </div>
+
+          <div class="summary-grid">
+            <div class="metric">
+              <span>Building Tasks</span>
+              <strong id="buildingTasksHours">0.0 hrs</strong>
+            </div>
+            <div class="metric">
+              <span>Building Integrations</span>
+              <strong id="buildingIntegrationsHours">0.0 hrs</strong>
+            </div>
+            <div class="metric">
+              <span>Template Build</span>
+              <strong id="templateWeeks">0.0 weeks</strong>
+            </div>
+            <div class="metric">
+              <span>Integration Build</span>
+              <strong id="integrationWeeks">0.0 weeks</strong>
+            </div>
+            <div class="metric">
+              <span>Total Readiness Window</span>
+              <strong id="overallWeeks">0.0 weeks</strong>
+            </div>
+            <div class="metric">
+              <span>Recommended Start Date</span>
+              <strong id="finishDate">TBD</strong>
+            </div>
+          </div>
+
+          <div class="formula">
+            Template estimate = (building tasks + process effort + team enablement + critical features) / weekly template hours<br>
+            Integration estimate = building integrations / weekly integration hours<br>
+            Final readiness window = whichever track takes longer
+          </div>
+
+          <div class="breakdown">
+            <div class="breakdown-row"><span>Process effort</span><strong id="processHours">0.0 hrs</strong></div>
+            <div class="breakdown-row"><span>Team enablement</span><strong id="teamHours">0.0 hrs</strong></div>
+            <div class="breakdown-row"><span>Critical features</span><strong id="featureHours">0.0 hrs</strong></div>
+            <div class="breakdown-row"><span>Total template hours</span><strong id="templateHours">0.0 hrs</strong></div>
+            <div class="breakdown-row"><span>Total overall hours</span><strong id="totalHours">0.0 hrs</strong></div>
+            <div class="breakdown-row"><span>Template days</span><strong id="templateDays">0 days</strong></div>
+            <div class="breakdown-row"><span>Integration days</span><strong id="integrationDays">0 days</strong></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Hosting Ready</h2>
+            <p class="panel-copy">This project is set up as a static site, so it can be published quickly on common no-backend hosts.</p>
+          </div>
+
+          <div class="deploy-list">
+            <div><strong>Netlify:</strong> drag this folder into a new site or connect a repo and publish.</div>
+            <div><strong>Vercel:</strong> import the folder or repo as a static project.</div>
+            <div><strong>GitHub Pages:</strong> serve the root of the repository as a static site.</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <p class="footer-note">
+            This estimate is directional by design. If your implementation team wants a different model, update the assumptions instead of hiding effort in the calculation.
+          </p>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const integrationOptions = [
+      ["salesforce", "Salesforce"],
+      ["hubspot", "HubSpot"],
+      ["jira", "Jira"],
+      ["slack", "Slack"],
+      ["gainsight", "Gainsight"],
+      ["na", "N/A"],
+      ["other", "Other"]
+    ];
+
+    const featureOptions = [
+      ["timeTracking", "Time Tracking"],
+      ["resourceManagement", "Resource Management"],
+      ["other", "Other"]
+    ];
+
+    const fieldIds = [
+      "projectId",
+      "projectName",
+      "processType",
+      "processOther",
+      "teams",
+      "totalProcesses",
+      "totalTasks",
+      "integrationWeeklyHours",
+      "templateWeeklyHours",
+      "goLiveDate",
+      "hoursPerTask",
+      "documentedProcessHours",
+      "undocumentedProcessHours",
+      "otherProcessHours",
+      "teamEnablementHours",
+      "integrationSalesforce",
+      "integrationHubspot",
+      "integrationJira",
+      "integrationSlack",
+      "integrationGainsight",
+      "integrationOtherHours",
+      "featureTimeTracking",
+      "featureResourceManagement",
+      "featureOtherHours",
+      "integrationOther",
+      "featureOther"
+    ];
+
+    const storageKey = "guidecx-loe-calculator";
+    const statusEl = document.getElementById("statusMessage");
+    const processOtherWrap = document.getElementById("processOtherWrap");
+    const integrationOtherWrap = document.getElementById("integrationOtherWrap");
+    const featureOtherWrap = document.getElementById("featureOtherWrap");
+
+    function buildChecks(containerId, groupName, options) {
+      const container = document.getElementById(containerId);
+      options.forEach(([value, label]) => {
+        const item = document.createElement("label");
+        item.className = "choice";
+        item.innerHTML = `
+          <input type="checkbox" name="${groupName}" value="${value}">
+          <span>${label}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    buildChecks("integrationChecks", "integrations", integrationOptions);
+    buildChecks("featureChecks", "features", featureOptions);
+
+    function todayLocal() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      const local = new Date(now.getTime() - offset * 60 * 1000);
+      return local.toISOString().slice(0, 10);
+    }
+
+    function selectedValues(name) {
+      return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((input) => input.value);
+    }
+
+    function num(id) {
+      const value = parseFloat(document.getElementById(id).value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function round1(value) {
+      return Math.round(value * 10) / 10;
+    }
+
+    function formatHours(value) {
+      return `${round1(value).toFixed(1)} hrs`;
+    }
+
+    function formatWeeks(value) {
+      return `${round1(value).toFixed(1)} weeks`;
+    }
+
+    function formatDays(value) {
+      return `${Math.round(value)} days`;
+    }
+
+    function integrationHoursFor(key) {
+      const map = {
+        salesforce: num("integrationSalesforce"),
+        hubspot: num("integrationHubspot"),
+        jira: num("integrationJira"),
+        slack: num("integrationSlack"),
+        gainsight: num("integrationGainsight"),
+        other: num("integrationOtherHours"),
+        na: 0
+      };
+      return map[key] || 0;
+    }
+
+    function featureHoursFor(key) {
+      const map = {
+        timeTracking: num("featureTimeTracking"),
+        resourceManagement: num("featureResourceManagement"),
+        other: num("featureOtherHours")
+      };
+      return map[key] || 0;
+    }
+
+    function processHoursPerProcess() {
+      const type = document.getElementById("processType").value;
+      if (type === "documented") return num("documentedProcessHours");
+      if (type === "undocumented") return num("undocumentedProcessHours");
+      return num("otherProcessHours");
+    }
+
+    function getState() {
+      const state = {};
+      fieldIds.forEach((id) => {
+        state[id] = document.getElementById(id).value;
+      });
+      state.integrations = selectedValues("integrations");
+      state.features = selectedValues("features");
+      return state;
+    }
+
+    function applyState(state) {
+      if (!state) return;
+      fieldIds.forEach((id) => {
+        if (state[id] !== undefined) {
+          document.getElementById(id).value = state[id];
+        }
+      });
+
+      document.querySelectorAll('input[name="integrations"]').forEach((input) => {
+        input.checked = (state.integrations || []).includes(input.value);
+      });
+
+      document.querySelectorAll('input[name="features"]').forEach((input) => {
+        input.checked = (state.features || []).includes(input.value);
+      });
+
+      toggleConditionalFields();
+      calculate();
+    }
+
+    function encodeState(state) {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    }
+
+    function decodeState(value) {
+      try {
+        return JSON.parse(decodeURIComponent(escape(atob(value))));
+      } catch {
+        return null;
+      }
+    }
+
+    function toggleConditionalFields() {
+      processOtherWrap.hidden = document.getElementById("processType").value !== "other";
+      integrationOtherWrap.hidden = !selectedValues("integrations").includes("other");
+      featureOtherWrap.hidden = !selectedValues("features").includes("other");
+    }
+
+    function calculate() {
+      toggleConditionalFields();
+
+      const buildingTasks = num("totalTasks") * num("hoursPerTask");
+      const processHours = num("totalProcesses") * processHoursPerProcess();
+      const teamHours = num("teams") * num("teamEnablementHours");
+      const featureHours = selectedValues("features").reduce((sum, key) => sum + featureHoursFor(key), 0);
+
+      let integrations = selectedValues("integrations");
+      if (integrations.includes("na")) integrations = ["na"];
+      const buildingIntegrations = integrations.reduce((sum, key) => sum + integrationHoursFor(key), 0);
+
+      const templateHours = buildingTasks + processHours + teamHours + featureHours;
+      const totalHours = templateHours + buildingIntegrations;
+      const templateWeeklyHours = num("templateWeeklyHours");
+      const integrationWeeklyHours = num("integrationWeeklyHours");
+
+      const templateWeeks = templateWeeklyHours > 0 ? templateHours / templateWeeklyHours : 0;
+      const integrationWeeks = integrationWeeklyHours > 0 ? buildingIntegrations / integrationWeeklyHours : 0;
+      const overallWeeks = Math.max(templateWeeks, integrationWeeks);
+      const templateDays = templateWeeks * 5;
+      const integrationDays = integrationWeeks * 5;
+
+      const goLiveDate = document.getElementById("goLiveDate").value;
+      let startDate = "TBD";
+      if (goLiveDate && Number.isFinite(overallWeeks)) {
+        const target = new Date(`${goLiveDate}T12:00:00`);
+        target.setDate(target.getDate() - Math.round(overallWeeks * 7));
+        startDate = target.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        });
+      }
+
+      document.getElementById("buildingTasksHours").textContent = formatHours(buildingTasks);
+      document.getElementById("buildingIntegrationsHours").textContent = formatHours(buildingIntegrations);
+      document.getElementById("templateWeeks").textContent = formatWeeks(templateWeeks);
+      document.getElementById("integrationWeeks").textContent = formatWeeks(integrationWeeks);
+      document.getElementById("overallWeeks").textContent = formatWeeks(overallWeeks);
+      document.getElementById("finishDate").textContent = startDate;
+      document.getElementById("processHours").textContent = formatHours(processHours);
+      document.getElementById("teamHours").textContent = formatHours(teamHours);
+      document.getElementById("featureHours").textContent = formatHours(featureHours);
+      document.getElementById("templateHours").textContent = formatHours(templateHours);
+      document.getElementById("totalHours").textContent = formatHours(totalHours);
+      document.getElementById("templateDays").textContent = formatDays(templateDays);
+      document.getElementById("integrationDays").textContent = formatDays(integrationDays);
+    }
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+      window.clearTimeout(setStatus.timer);
+      setStatus.timer = window.setTimeout(() => {
+        statusEl.textContent = "";
+      }, 2600);
+    }
+
+    document.getElementById("copyLinkButton").addEventListener("click", async () => {
+      const shareUrl = new URL(window.location.href);
+      shareUrl.hash = encodeState(getState());
+      try {
+        await navigator.clipboard.writeText(shareUrl.toString());
+        setStatus("Share link copied.");
+      } catch {
+        setStatus("Clipboard access failed. Copy the full URL from the browser.");
+      }
+    });
+
+    document.getElementById("saveButton").addEventListener("click", () => {
+      window.localStorage.setItem(storageKey, JSON.stringify(getState()));
+      setStatus("Inputs saved on this device.");
+    });
+
+    document.getElementById("resetButton").addEventListener("click", () => {
+      window.localStorage.removeItem(storageKey);
+      window.location.hash = "";
+      window.location.reload();
+    });
+
+    document.addEventListener("input", calculate);
+    document.addEventListener("change", calculate);
+
+    if (!document.getElementById("goLiveDate").value) {
+      document.getElementById("goLiveDate").value = todayLocal();
+    }
+
+    const hashState = window.location.hash.slice(1) ? decodeState(window.location.hash.slice(1)) : null;
+    const savedState = window.localStorage.getItem(storageKey);
+
+    if (hashState) {
+      applyState(hashState);
+      setStatus("Shared estimate loaded.");
+    } else if (savedState) {
+      applyState(JSON.parse(savedState));
+      setStatus("Saved estimate restored.");
+    } else {
+      toggleConditionalFields();
+      calculate();
+    }
+  </script>
+</body>
+</html>
