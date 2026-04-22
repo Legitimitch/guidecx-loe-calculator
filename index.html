@@ -141,7 +141,7 @@
     }
 
     .hero h1 {
-      font-size: clamp(2.25rem, 5vw, 4.6rem);
+      font-size: clamp(1.2rem, 2.6vw, 2.3rem);
       line-height: 0.93;
       letter-spacing: -0.05em;
       max-width: 12ch;
@@ -587,8 +587,8 @@
       <main class="stack">
         <section class="panel">
           <div class="panel-header">
-            <h2>Project Setup</h2>
-            <p class="panel-copy">Use the few inputs that directly drive the estimate. The form is simplified to the customer-facing fields only.</p>
+            <h2>Template Build</h2>
+            <p class="panel-copy">This will determine the estimate time needed to build your process. in GUIDEcx.</p>
           </div>
 
           <div class="field-grid">
@@ -628,7 +628,7 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Critical Integrations</h2>
-            <p class="panel-copy">Each selected integration contributes a fixed value directly to the integration timeline.</p>
+            <p class="panel-copy">Select each known core integration REQUIRED for go-live.</p>
           </div>
 
           <div class="chip-grid" id="integrationChecks"></div>
@@ -681,13 +681,6 @@
               <span>Projected Go-Live</span>
               <strong id="goLiveDateDisplay">TBD</strong>
             </div>
-          </div>
-
-          <div class="formula">
-            Building Tasks = ((Total Tasks * 7) / 60) + 4<br>
-            Template Build = (Building Tasks / Weekly Template Hours) + Feature Weeks + Undocumented Process Adjustment<br>
-            Integrations = Sum of selected integration values<br>
-            Go-Live = Today + (Template Build * 7 days)
           </div>
 
           <div class="breakdown">
