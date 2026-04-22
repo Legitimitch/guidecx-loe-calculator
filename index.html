@@ -154,21 +154,6 @@
       font-size: 1rem;
     }
 
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .meta-chip {
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.78);
-    }
-
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
@@ -581,16 +566,11 @@
 
         <div class="hero-copy">
           <div class="eyebrow">Directional Estimate Tool</div>
-          <h1>Build a clean, shareable GUIDEcx launch estimate.</h1>
+          <h1>Estimate your GUIDEcx Implementation and Onboarding LOE and Timeline.</h1>
           <p>
-            This version follows your live estimating logic more closely: task build effort is calculated from task volume,
-            process maturity adds a fixed template adjustment, integrations use fixed values, and go-live is projected from today.
+            This version follows your shared estimating logic more closely: task build effort is calculated from task volume,
+            integrations use fixed values, and go-live is projected from today.
           </p>
-          <div class="hero-meta">
-            <div class="meta-chip">Shareable via encoded URL</div>
-            <div class="meta-chip">Customer-facing PDF export</div>
-            <div class="meta-chip">Formula-driven and lightweight</div>
-          </div>
         </div>
 
         <div class="hero-actions">
@@ -609,17 +589,13 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Project Setup</h2>
-            <p class="panel-copy">Use the few inputs that directly drive the estimate. Project ID and project name have been removed from the customer-facing form.</p>
+            <p class="panel-copy">Use the few inputs that directly drive the estimate. The form is simplified to the customer-facing fields only.</p>
           </div>
 
           <div class="field-grid">
             <label>
-              Process Type
-              <select id="processType" name="processType">
-                <option value="documented">Documented</option>
-                <option value="undocumented">Undocumented</option>
-              </select>
-              <span class="field-help">Documented adds 0 template weeks. Undocumented adds 2 template weeks.</span>
+              Company Name
+              <input id="companyName" name="companyName" type="text" placeholder="Acme Corp">
             </label>
 
             <label>
@@ -680,7 +656,7 @@
         <section class="panel">
           <div class="summary-head">
             <h2>Estimate Summary</h2>
-            <p>The calculator now mirrors the logic you outlined: building tasks convert to template weeks, integrations total fixed values, and projected go-live is based on today.</p>
+            <p>The calculator mirrors the shared logic: building tasks convert to template weeks, integrations total fixed values, and projected go-live is based on today.</p>
           </div>
 
           <div class="summary-grid">
@@ -704,13 +680,12 @@
 
           <div class="formula">
             Building Tasks = ((Total Tasks * 7) / 60) + 4<br>
-            Template Build = (Building Tasks / Weekly Template Hours) + Process Value<br>
+            Template Build = Building Tasks / Weekly Template Hours<br>
             Integrations = Sum of selected integration values<br>
             Go-Live = Today + (Template Build * 7 days)
           </div>
 
           <div class="breakdown">
-            <div class="breakdown-row"><span>Process value</span><strong id="processValue">0.0 weeks</strong></div>
             <div class="breakdown-row"><span>Template build days</span><strong id="templateDays">0 days</strong></div>
             <div class="breakdown-row"><span>Integration days</span><strong id="integrationDays">0 days</strong></div>
             <div class="breakdown-row"><span>Selected integrations</span><strong id="selectedIntegrations">None</strong></div>
@@ -760,7 +735,7 @@
     </div>
 
     <table class="pdf-table">
-      <tr><td>Process type</td><td id="pdfProcessType">Documented</td></tr>
+      <tr><td>Company name</td><td id="pdfCompanyName">Not provided</td></tr>
       <tr><td>Total teams</td><td id="pdfTeams">1</td></tr>
       <tr><td>Total tasks</td><td id="pdfTasks">1</td></tr>
       <tr><td>Selected integrations</td><td id="pdfIntegrations">None</td></tr>
@@ -788,7 +763,7 @@
     ];
 
     const fieldIds = [
-      "processType",
+      "companyName",
       "totalTasks",
       "templateWeeklyHours",
       "teams",
@@ -809,11 +784,6 @@
       gainsight: 4,
       na: 0,
       other: 0
-    };
-
-    const processValues = {
-      documented: 0,
-      undocumented: 2
     };
 
     function buildChecks(containerId, groupName, options) {
@@ -943,11 +913,8 @@
 
       const totalTasks = num("totalTasks");
       const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0.1);
-      const processType = document.getElementById("processType").value;
-      const processValue = processValues[processType] || 0;
-
       const buildingTasksHours = ((totalTasks * 7) / 60) + 4;
-      const templateWeeks = (buildingTasksHours / weeklyTemplateHours) + processValue;
+      const templateWeeks = buildingTasksHours / weeklyTemplateHours;
 
       let integrations = selectedValues("integrations");
       if (integrations.includes("na")) integrations = ["na"];
@@ -967,7 +934,6 @@
       document.getElementById("templateWeeks").textContent = formatWeeks(templateWeeks);
       document.getElementById("buildingIntegrationsValue").textContent = formatWeeks(integrationWeeks);
       document.getElementById("goLiveDateDisplay").textContent = formatDate(projectedGoLive);
-      document.getElementById("processValue").textContent = formatWeeks(processValue);
       document.getElementById("templateDays").textContent = formatDays(templateDays);
       document.getElementById("integrationDays").textContent = formatDays(integrationDays);
       document.getElementById("selectedIntegrations").textContent = selectedIntegrationLabels;
@@ -977,7 +943,7 @@
       document.getElementById("pdfTemplateWeeks").textContent = formatWeeks(templateWeeks);
       document.getElementById("pdfIntegrationWeeks").textContent = formatWeeks(integrationWeeks);
       document.getElementById("pdfGoLive").textContent = formatDate(projectedGoLive);
-      document.getElementById("pdfProcessType").textContent = processType === "documented" ? "Documented" : "Undocumented";
+      document.getElementById("pdfCompanyName").textContent = document.getElementById("companyName").value.trim() || "Not provided";
       document.getElementById("pdfTeams").textContent = String(num("teams"));
       document.getElementById("pdfTasks").textContent = String(totalTasks);
       document.getElementById("pdfIntegrations").textContent = selectedIntegrationLabels;
