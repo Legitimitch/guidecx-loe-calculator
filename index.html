@@ -728,7 +728,7 @@
   <section class="pdf-sheet" id="pdfSheet">
     <img class="pdf-brand" src="assets/guidecx-full-white.png" alt="GUIDEcx LOE Calculator branding">
     <p>
-      This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.
+      This estimate is for planning and alignment and is based on what is currently known, including process documentation and integrations required for go-live.
     </p>
     <p>
       *Timelines may be dramatically reduced if process assets are shared for import, or scope of integrations change.
@@ -756,14 +756,13 @@
     <table class="pdf-table">
       <tr><td>Company name</td><td id="pdfCompanyName">Not provided</td></tr>
       <tr><td>User name</td><td id="pdfUserName">Not provided</td></tr>
-      <tr><td>Total teams</td><td id="pdfTeams">1</td></tr>
-      <tr><td>Total tasks</td><td id="pdfTasks">1</td></tr>
       <tr><td>Process is documented</td><td id="pdfDocumented">Yes</td></tr>
-      <tr><td>Selected integrations</td><td id="pdfIntegrations">None</td></tr>
-      <tr><td>Additional features</td><td id="pdfFeatures">None</td></tr>
-      <tr><td>Feature weeks</td><td id="pdfFeatureWeeks">0.0 weeks</td></tr>
-      <tr><td>Template build days</td><td id="pdfTemplateDays">0 days</td></tr>
-      <tr><td>Integration days</td><td id="pdfIntegrationDays">0 days</td></tr>
+      <tr><td>Effort</td><td id="pdfBuildingTasks">0.0 hrs</td></tr>
+      <tr><td>Weekly hours commit</td><td id="pdfWeeklyHours">0 hrs</td></tr>
+      <tr><td>Total weeks</td><td id="pdfTemplateWeeks">0.0 weeks</td></tr>
+      <tr><td>Integrations</td><td id="pdfIntegrations">None</td></tr>
+      <tr><td>Additional feature implementation</td><td id="pdfFeatures">None</td></tr>
+      <tr><td>Projected go-live</td><td id="pdfGoLive">TBD</td></tr>
       <tr id="pdfUndocumentedNoteRow" hidden><td colspan="2" id="pdfUndocumentedNote">Undocumented processes can extend timelines on average of two weeks.</td></tr>
     </table>
   </section>
@@ -976,14 +975,10 @@
       document.getElementById("pdfGoLive").textContent = formatDate(projectedGoLive);
       document.getElementById("pdfCompanyName").textContent = document.getElementById("companyName").value.trim() || "Not provided";
       document.getElementById("pdfUserName").textContent = document.getElementById("userName").value.trim() || "Not provided";
-      document.getElementById("pdfTeams").textContent = String(num("teams"));
-      document.getElementById("pdfTasks").textContent = String(totalTasks);
       document.getElementById("pdfDocumented").textContent = processDocumented ? "Yes" : "No";
+      document.getElementById("pdfWeeklyHours").textContent = `${weeklyTemplateHours} hrs`;
       document.getElementById("pdfIntegrations").textContent = selectedIntegrationLabels;
       document.getElementById("pdfFeatures").textContent = selectedFeatureLabels;
-      document.getElementById("pdfFeatureWeeks").textContent = formatWeeks(featureWeeks);
-      document.getElementById("pdfTemplateDays").textContent = formatDays(templateDays);
-      document.getElementById("pdfIntegrationDays").textContent = formatDays(integrationDays);
       document.getElementById("pdfUndocumentedNoteRow").hidden = processDocumented;
     }
 
@@ -1045,7 +1040,7 @@
       drawText("Estimate GUIDEcx implementation timeline and effort.", 64, 664, 12, rgb(0.84, 0.84, 0.84), "F2");
 
       const introLines = wrapText(
-        "This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.",
+        "This estimate is for planning and alignment and is based on what is currently known, including process documentation and integrations required for go-live.",
         92
       );
       let introY = 592;
@@ -1089,55 +1084,44 @@
         });
       });
 
-      drawRect(64, 76, 230, 266, rgb(0.99, 0.99, 0.98));
-      drawRect(318, 76, 230, 266, rgb(0.99, 0.99, 0.98));
+      drawRect(64, 56, 484, 296, rgb(0.99, 0.99, 0.98));
+      drawText("Company Name".toUpperCase(), 80, 328, 8, rgb(0.42, 0.39, 0.36), "F2");
+      drawText(document.getElementById("pdfCompanyName").textContent, 80, 310, 13, rgb(0.07, 0.07, 0.07), "F2");
+      drawText("User Name".toUpperCase(), 300, 328, 8, rgb(0.42, 0.39, 0.36), "F2");
+      drawText(document.getElementById("pdfUserName").textContent, 300, 310, 13, rgb(0.07, 0.07, 0.07), "F2");
 
-      const leftRows = [
-        ["Company Name", document.getElementById("pdfCompanyName").textContent],
-        ["User Name", document.getElementById("pdfUserName").textContent],
-        ["Total Teams", document.getElementById("pdfTeams").textContent],
-        ["Total Tasks", document.getElementById("pdfTasks").textContent],
+      drawText("Template Build", 80, 274, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawRect(80, 118, 210, 140, rgb(0.97, 0.96, 0.94));
+      const templateRows = [
         ["Process is documented", document.getElementById("pdfDocumented").textContent],
-        ["Selected Integrations", document.getElementById("pdfIntegrations").textContent],
-        ["Additional Features", document.getElementById("pdfFeatures").textContent]
+        ["Effort", document.getElementById("pdfBuildingTasks").textContent],
+        ["Weekly Hours Commit", document.getElementById("pdfWeeklyHours").textContent],
+        ["Total Weeks", document.getElementById("pdfTemplateWeeks").textContent]
       ];
+      let templateY = 236;
+      templateRows.forEach(([label, value]) => {
+        drawText(label.toUpperCase(), 94, templateY, 8, rgb(0.42, 0.39, 0.36), "F2");
+        drawText(value, 204, templateY, 11, rgb(0.07, 0.07, 0.07), "F2");
+        templateY -= 30;
+      });
 
-      let leftY = 314;
-      leftRows.forEach(([label, value]) => {
-        drawText(label.toUpperCase(), 80, leftY, 8, rgb(0.42, 0.39, 0.36), "F2");
-        leftY -= 16;
-        const lines = wrapText(value, 28);
+      drawText("Integrations", 318, 274, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawRect(318, 98, 214, 160, rgb(0.97, 0.96, 0.94));
+      const integrationRows = [
+        ["Integrations", document.getElementById("pdfIntegrations").textContent],
+        ["Additional Feature Implementation", document.getElementById("pdfFeatures").textContent],
+        ["Projected Go-Live", document.getElementById("pdfGoLive").textContent]
+      ];
+      let integrationY = 236;
+      integrationRows.forEach(([label, value]) => {
+        drawText(label.toUpperCase(), 332, integrationY, 8, rgb(0.42, 0.39, 0.36), "F2");
+        integrationY -= 16;
+        const lines = wrapText(value, 24);
         lines.forEach((line) => {
-          drawText(line, 80, leftY, 12, rgb(0.07, 0.07, 0.07), "F2");
-          leftY -= 14;
+          drawText(line, 332, integrationY, 12, rgb(0.07, 0.07, 0.07), "F2");
+          integrationY -= 14;
         });
-        leftY -= 8;
-      });
-
-      const rightRows = [
-        ["Feature Weeks", document.getElementById("pdfFeatureWeeks").textContent],
-        ["Template Build Days", document.getElementById("pdfTemplateDays").textContent],
-        ["Integration Days", document.getElementById("pdfIntegrationDays").textContent]
-      ];
-
-      let rightY = 308;
-      rightRows.forEach(([label, value]) => {
-        drawRect(334, rightY - 18, 198, 56, rgb(0.95, 0.93, 0.90));
-        drawText(label.toUpperCase(), 346, rightY + 16, 8, rgb(0.42, 0.39, 0.36), "F2");
-        drawText(value, 346, rightY - 2, 17, rgb(0.07, 0.07, 0.07), "F2");
-        rightY -= 70;
-      });
-
-      drawRect(334, 86, 198, 102, rgb(0.07, 0.07, 0.07));
-      drawText("Timeline Readout", 346, 162, 14, rgb(1, 1, 1), "F2");
-      const timelineLines = wrapText(
-        `Based on the current inputs, the recommended target go-live is ${document.getElementById("pdfGoLive").textContent}.`,
-        30
-      );
-      let timelineY = 136;
-      timelineLines.forEach((line) => {
-        drawText(line, 346, timelineY, 11, rgb(0.84, 0.84, 0.84));
-        timelineY -= 14;
+        integrationY -= 12;
       });
 
       if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
