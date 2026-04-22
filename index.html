@@ -144,7 +144,7 @@
       font-size: clamp(0.72rem, 1.3vw, 1.15rem);
       line-height: 0.93;
       letter-spacing: -0.05em;
-      max-width: 12ch;
+      max-width: 26ch;
     }
 
     .hero p {
@@ -587,8 +587,8 @@
       <main class="stack">
         <section class="panel">
           <div class="panel-header">
-            <h2>Template Build</h2>
-            <p class="panel-copy">This will determine the estimate time needed to build your process. in GUIDEcx.</p>
+            <h2>Estimate Details</h2>
+            <p class="panel-copy">Capture who is completing the estimate and which company this estimate is for.</p>
           </div>
 
           <div class="field-grid">
@@ -598,15 +598,31 @@
             </label>
 
             <label>
-              Total Tasks
-              <input id="totalTasks" name="totalTasks" type="number" min="0" step="1" value="1">
-              <span class="field-help">Estimate total tasks to build (best guess)</span>
+              User Name
+              <input id="userName" name="userName" type="text" placeholder="Jane Smith">
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Template Build</h2>
+            <p class="panel-copy">This will determine the estimate time needed to build your process manually in GUIDEcx.</p>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              Process is Documented
+              <select id="processDocumented" name="processDocumented">
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
             </label>
 
             <label>
-              Weekly Hours for Template Build
-              <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0.1" step="0.1" value="10">
-              <span class="field-help">Your estimate hours committed to building templates.</span>
+              Estimate Total Tasks
+              <input id="totalTasks" name="totalTasks" type="number" min="0" step="1" value="1">
+              <span class="field-help">Estimate total tasks to build (best guess)</span>
             </label>
 
             <label>
@@ -615,12 +631,10 @@
               <span class="field-help">How many teams need their process built and will need training?</span>
             </label>
 
-            <label class="full">
-              Process is Documented
-              <select id="processDocumented" name="processDocumented">
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
+            <label>
+              Weekly Hours Commit
+              <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0.1" step="0.1" value="10">
+              <span class="field-help">Your estimate hours committed to building templates.</span>
             </label>
           </div>
         </section>
@@ -725,6 +739,7 @@
 
     <table class="pdf-table">
       <tr><td>Company name</td><td id="pdfCompanyName">Not provided</td></tr>
+      <tr><td>User name</td><td id="pdfUserName">Not provided</td></tr>
       <tr><td>Total teams</td><td id="pdfTeams">1</td></tr>
       <tr><td>Total tasks</td><td id="pdfTasks">1</td></tr>
       <tr><td>Process is documented</td><td id="pdfDocumented">Yes</td></tr>
@@ -756,6 +771,7 @@
 
     const fieldIds = [
       "companyName",
+      "userName",
       "totalTasks",
       "templateWeeklyHours",
       "teams",
@@ -943,6 +959,7 @@
       document.getElementById("pdfIntegrationWeeks").textContent = formatWeeks(integrationWeeks);
       document.getElementById("pdfGoLive").textContent = formatDate(projectedGoLive);
       document.getElementById("pdfCompanyName").textContent = document.getElementById("companyName").value.trim() || "Not provided";
+      document.getElementById("pdfUserName").textContent = document.getElementById("userName").value.trim() || "Not provided";
       document.getElementById("pdfTeams").textContent = String(num("teams"));
       document.getElementById("pdfTasks").textContent = String(totalTasks);
       document.getElementById("pdfDocumented").textContent = processDocumented ? "Yes" : "No";
@@ -1049,11 +1066,11 @@
       drawRect(64, 120, 230, 278, rgb(0.99, 0.99, 0.98));
       drawRect(318, 120, 230, 278, rgb(0.99, 0.99, 0.98));
 
-      drawText("Project Inputs", 80, 372, 18, rgb(0.07, 0.07, 0.07), "F2");
-      drawText("Estimate Notes", 334, 372, 18, rgb(0.07, 0.07, 0.07), "F2");
+      drawText("Summary", 80, 372, 18, rgb(0.07, 0.07, 0.07), "F2");
 
       const leftRows = [
         ["Company Name", document.getElementById("pdfCompanyName").textContent],
+        ["User Name", document.getElementById("pdfUserName").textContent],
         ["Total Teams", document.getElementById("pdfTeams").textContent],
         ["Total Tasks", document.getElementById("pdfTasks").textContent],
         ["Process is documented", document.getElementById("pdfDocumented").textContent],
