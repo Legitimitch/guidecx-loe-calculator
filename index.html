@@ -568,8 +568,7 @@
           <div class="eyebrow">Directional Estimate Tool</div>
           <h1>Estimate your GUIDEcx Implementation and Onboarding LOE and Timeline.</h1>
           <p>
-            This version follows your shared estimating logic more closely: task build effort is calculated from task volume,
-            integrations use fixed values, and go-live is projected from today.
+            Use this calculator together during a sales or post-sale conversation to estimate implementation effort, onboarding scope, and expected launch timing.
           </p>
         </div>
 
@@ -601,19 +600,27 @@
             <label>
               Total Tasks
               <input id="totalTasks" name="totalTasks" type="number" min="0" step="1" value="1">
-              <span class="field-help">Building tasks formula: ((total tasks * 7) / 60) + 4</span>
+              <span class="field-help">Estimate total tasks to build (best guess)</span>
             </label>
 
             <label>
               Weekly Hours for Template Build
               <input id="templateWeeklyHours" name="templateWeeklyHours" type="number" min="0.1" step="0.1" value="10">
-              <span class="field-help">Used to convert building-task hours into template-build weeks.</span>
+              <span class="field-help">Your estimate hours committed to building templates.</span>
             </label>
 
             <label>
               Total Teams
               <input id="teams" name="teams" type="number" min="0" step="1" value="1">
-              <span class="field-help">Shown in the export summary for context, but not used in the current formula set you provided.</span>
+              <span class="field-help">How many teams need their process built and will need training?</span>
+            </label>
+
+            <label class="full">
+              Undocumented Process
+              <select id="undocumentedProcess" name="undocumentedProcess">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
             </label>
           </div>
         </section>
@@ -630,7 +637,6 @@
             <label class="full" id="integrationOtherWrap" hidden>
               Other Integration
               <input id="integrationOther" name="integrationOther" type="text" placeholder="Name the additional integration">
-              <span class="field-help">Other integrations are listed in the summary but currently add 0 unless you want a fixed value assigned later.</span>
             </label>
           </div>
         </section>
@@ -638,7 +644,7 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Additional Features</h2>
-            <p class="panel-copy">These remain optional reference fields in the form and summary. They do not affect the current estimate unless you want to add feature logic later.</p>
+            <p class="panel-copy">Include only features that are critical for go-live.</p>
           </div>
 
           <div class="chip-grid" id="featureChecks"></div>
@@ -656,7 +662,6 @@
         <section class="panel">
           <div class="summary-head">
             <h2>Estimate Summary</h2>
-            <p>The calculator mirrors the shared logic: building tasks convert to template weeks, integrations total fixed values, and projected go-live is based on today.</p>
           </div>
 
           <div class="summary-grid">
@@ -680,28 +685,19 @@
 
           <div class="formula">
             Building Tasks = ((Total Tasks * 7) / 60) + 4<br>
-            Template Build = Building Tasks / Weekly Template Hours<br>
+            Template Build = (Building Tasks / Weekly Template Hours) + Feature Weeks + Undocumented Process Adjustment<br>
             Integrations = Sum of selected integration values<br>
             Go-Live = Today + (Template Build * 7 days)
           </div>
 
           <div class="breakdown">
+            <div class="breakdown-row"><span>Feature weeks</span><strong id="featureWeeks">0.0 weeks</strong></div>
+            <div class="breakdown-row"><span>Undocumented process adjustment</span><strong id="undocumentedWeeks">0.0 weeks</strong></div>
             <div class="breakdown-row"><span>Template build days</span><strong id="templateDays">0 days</strong></div>
             <div class="breakdown-row"><span>Integration days</span><strong id="integrationDays">0 days</strong></div>
             <div class="breakdown-row"><span>Selected integrations</span><strong id="selectedIntegrations">None</strong></div>
             <div class="breakdown-row"><span>Additional features</span><strong id="selectedFeatures">None</strong></div>
           </div>
-
-          <div class="summary-callout">
-            <h3>PDF export</h3>
-            <p>The summary PDF is designed to be clean and customer-facing. It prints only the branded summary sheet, not the full working form.</p>
-          </div>
-        </section>
-
-        <section class="panel">
-          <p class="footer-note">
-            Current assumptions used exactly as provided: Salesforce 2, HubSpot 2, Jira 4, Slack 1, Gainsight 4, N/A 0, Documented process 0, and Undocumented process 2.
-          </p>
         </section>
       </aside>
     </div>
@@ -712,7 +708,7 @@
     <div class="pdf-kicker">Directional Estimate Summary</div>
     <h1>GUIDEcx implementation estimate</h1>
     <p>
-      This estimate is intended for planning and alignment. It reflects current task volume, process maturity, and critical integrations required for go-live.
+      This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.
     </p>
 
     <div class="pdf-grid">
@@ -738,10 +734,13 @@
       <tr><td>Company name</td><td id="pdfCompanyName">Not provided</td></tr>
       <tr><td>Total teams</td><td id="pdfTeams">1</td></tr>
       <tr><td>Total tasks</td><td id="pdfTasks">1</td></tr>
+      <tr><td>Undocumented process</td><td id="pdfUndocumented">No</td></tr>
       <tr><td>Selected integrations</td><td id="pdfIntegrations">None</td></tr>
       <tr><td>Additional features</td><td id="pdfFeatures">None</td></tr>
+      <tr><td>Feature weeks</td><td id="pdfFeatureWeeks">0.0 weeks</td></tr>
       <tr><td>Template build days</td><td id="pdfTemplateDays">0 days</td></tr>
       <tr><td>Integration days</td><td id="pdfIntegrationDays">0 days</td></tr>
+      <tr id="pdfUndocumentedNoteRow" hidden><td colspan="2" id="pdfUndocumentedNote">Undocumented processes can extend timelines on average of two weeks.</td></tr>
     </table>
   </section>
 
@@ -767,6 +766,7 @@
       "totalTasks",
       "templateWeeklyHours",
       "teams",
+      "undocumentedProcess",
       "integrationOther",
       "featureOther"
     ];
@@ -913,8 +913,12 @@
 
       const totalTasks = num("totalTasks");
       const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0.1);
+      const undocumentedProcess = document.getElementById("undocumentedProcess").value === "yes";
       const buildingTasksHours = ((totalTasks * 7) / 60) + 4;
-      const templateWeeks = buildingTasksHours / weeklyTemplateHours;
+      const selectedFeatureValues = selectedValues("features");
+      const featureWeeks = selectedFeatureValues.includes("timeTracking") || selectedFeatureValues.includes("resourceManagement") ? 1 : 0;
+      const undocumentedWeeks = undocumentedProcess ? 2 : 0;
+      const templateWeeks = (buildingTasksHours / weeklyTemplateHours) + featureWeeks + undocumentedWeeks;
 
       let integrations = selectedValues("integrations");
       if (integrations.includes("na")) integrations = ["na"];
@@ -934,6 +938,8 @@
       document.getElementById("templateWeeks").textContent = formatWeeks(templateWeeks);
       document.getElementById("buildingIntegrationsValue").textContent = formatWeeks(integrationWeeks);
       document.getElementById("goLiveDateDisplay").textContent = formatDate(projectedGoLive);
+      document.getElementById("featureWeeks").textContent = formatWeeks(featureWeeks);
+      document.getElementById("undocumentedWeeks").textContent = formatWeeks(undocumentedWeeks);
       document.getElementById("templateDays").textContent = formatDays(templateDays);
       document.getElementById("integrationDays").textContent = formatDays(integrationDays);
       document.getElementById("selectedIntegrations").textContent = selectedIntegrationLabels;
@@ -946,10 +952,90 @@
       document.getElementById("pdfCompanyName").textContent = document.getElementById("companyName").value.trim() || "Not provided";
       document.getElementById("pdfTeams").textContent = String(num("teams"));
       document.getElementById("pdfTasks").textContent = String(totalTasks);
+      document.getElementById("pdfUndocumented").textContent = undocumentedProcess ? "Yes" : "No";
       document.getElementById("pdfIntegrations").textContent = selectedIntegrationLabels;
       document.getElementById("pdfFeatures").textContent = selectedFeatureLabels;
+      document.getElementById("pdfFeatureWeeks").textContent = formatWeeks(featureWeeks);
       document.getElementById("pdfTemplateDays").textContent = formatDays(templateDays);
       document.getElementById("pdfIntegrationDays").textContent = formatDays(integrationDays);
+      document.getElementById("pdfUndocumentedNoteRow").hidden = !undocumentedProcess;
+    }
+
+    function pdfEscape(value) {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/\(/g, "\\(")
+        .replace(/\)/g, "\\)");
+    }
+
+    function buildPdfBlob() {
+      const lines = [
+        { text: "GUIDEcx LOE Calculator", size: 22 },
+        { text: "Directional Estimate Summary", size: 11 },
+        { text: "" },
+        { text: "GUIDEcx implementation estimate", size: 18 },
+        { text: "This estimate is intended for planning and alignment. It reflects what is known or shared at the time,", size: 10 },
+        { text: "process evolution, and critical integrations expressed as required for go-live as opposed to completed", size: 10 },
+        { text: "post go-live.", size: 10 },
+        { text: "" },
+        { text: `Building Tasks: ${document.getElementById("pdfBuildingTasks").textContent}`, size: 12 },
+        { text: `Template Build: ${document.getElementById("pdfTemplateWeeks").textContent}`, size: 12 },
+        { text: `Integrations: ${document.getElementById("pdfIntegrationWeeks").textContent}`, size: 12 },
+        { text: `Projected Go-Live: ${document.getElementById("pdfGoLive").textContent}`, size: 12 },
+        { text: "" },
+        { text: `Company Name: ${document.getElementById("pdfCompanyName").textContent}`, size: 11 },
+        { text: `Total Teams: ${document.getElementById("pdfTeams").textContent}`, size: 11 },
+        { text: `Total Tasks: ${document.getElementById("pdfTasks").textContent}`, size: 11 },
+        { text: `Undocumented Process: ${document.getElementById("pdfUndocumented").textContent}`, size: 11 },
+        { text: `Selected Integrations: ${document.getElementById("pdfIntegrations").textContent}`, size: 11 },
+        { text: `Additional Features: ${document.getElementById("pdfFeatures").textContent}`, size: 11 },
+        { text: `Feature Weeks: ${document.getElementById("pdfFeatureWeeks").textContent}`, size: 11 },
+        { text: `Template Build Days: ${document.getElementById("pdfTemplateDays").textContent}`, size: 11 },
+        { text: `Integration Days: ${document.getElementById("pdfIntegrationDays").textContent}`, size: 11 }
+      ];
+
+      if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
+        lines.push({ text: "" });
+        lines.push({ text: "Undocumented processes can extend timelines on average of two weeks.", size: 10 });
+      }
+
+      let y = 760;
+      const content = [];
+      lines.forEach((line) => {
+        if (!line.text) {
+          y -= 12;
+          return;
+        }
+        const size = line.size || 11;
+        content.push(`BT /F1 ${size} Tf 54 ${y} Td (${pdfEscape(line.text)}) Tj ET`);
+        y -= size > 16 ? 28 : 18;
+      });
+
+      const stream = content.join("\n");
+      const objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>`,
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`
+      ];
+
+      let pdf = "%PDF-1.4\n";
+      const offsets = [0];
+      objects.forEach((object, index) => {
+        offsets.push(pdf.length);
+        pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+      });
+
+      const xrefStart = pdf.length;
+      pdf += `xref\n0 ${objects.length + 1}\n`;
+      pdf += "0000000000 65535 f \n";
+      offsets.slice(1).forEach((offset) => {
+        pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+      });
+      pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+
+      return new Blob([pdf], { type: "application/pdf" });
     }
 
     document.addEventListener("input", calculate);
@@ -968,7 +1054,18 @@
 
     document.getElementById("downloadPdfButton").addEventListener("click", () => {
       calculate();
-      window.print();
+      const blob = buildPdfBlob();
+      const companyName = document.getElementById("companyName").value.trim() || "guidecx-loe-summary";
+      const safeName = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${safeName || "guidecx-loe-summary"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus("PDF downloaded.");
     });
 
     document.getElementById("saveButton").addEventListener("click", () => {
