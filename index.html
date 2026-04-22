@@ -141,7 +141,7 @@
     }
 
     .hero h1 {
-      font-size: clamp(1.2rem, 2.6vw, 2.3rem);
+      font-size: clamp(0.72rem, 1.3vw, 1.15rem);
       line-height: 0.93;
       letter-spacing: -0.05em;
       max-width: 12ch;
@@ -616,10 +616,10 @@
             </label>
 
             <label class="full">
-              Undocumented Process
-              <select id="undocumentedProcess" name="undocumentedProcess">
-                <option value="no">No</option>
+              Process is Documented
+              <select id="processDocumented" name="processDocumented">
                 <option value="yes">Yes</option>
+                <option value="no">No</option>
               </select>
             </label>
           </div>
@@ -727,7 +727,7 @@
       <tr><td>Company name</td><td id="pdfCompanyName">Not provided</td></tr>
       <tr><td>Total teams</td><td id="pdfTeams">1</td></tr>
       <tr><td>Total tasks</td><td id="pdfTasks">1</td></tr>
-      <tr><td>Undocumented process</td><td id="pdfUndocumented">No</td></tr>
+      <tr><td>Process is documented</td><td id="pdfDocumented">Yes</td></tr>
       <tr><td>Selected integrations</td><td id="pdfIntegrations">None</td></tr>
       <tr><td>Additional features</td><td id="pdfFeatures">None</td></tr>
       <tr><td>Feature weeks</td><td id="pdfFeatureWeeks">0.0 weeks</td></tr>
@@ -759,7 +759,7 @@
       "totalTasks",
       "templateWeeklyHours",
       "teams",
-      "undocumentedProcess",
+      "processDocumented",
       "integrationOther",
       "featureOther"
     ];
@@ -906,11 +906,11 @@
 
       const totalTasks = num("totalTasks");
       const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0.1);
-      const undocumentedProcess = document.getElementById("undocumentedProcess").value === "yes";
+      const processDocumented = document.getElementById("processDocumented").value === "yes";
       const buildingTasksHours = ((totalTasks * 7) / 60) + 4;
       const selectedFeatureValues = selectedValues("features");
       const featureWeeks = selectedFeatureValues.includes("timeTracking") || selectedFeatureValues.includes("resourceManagement") ? 1 : 0;
-      const undocumentedWeeks = undocumentedProcess ? 2 : 0;
+      const undocumentedWeeks = processDocumented ? 0 : 2;
       const templateWeeks = (buildingTasksHours / weeklyTemplateHours) + featureWeeks + undocumentedWeeks;
 
       let integrations = selectedValues("integrations");
@@ -945,13 +945,13 @@
       document.getElementById("pdfCompanyName").textContent = document.getElementById("companyName").value.trim() || "Not provided";
       document.getElementById("pdfTeams").textContent = String(num("teams"));
       document.getElementById("pdfTasks").textContent = String(totalTasks);
-      document.getElementById("pdfUndocumented").textContent = undocumentedProcess ? "Yes" : "No";
+      document.getElementById("pdfDocumented").textContent = processDocumented ? "Yes" : "No";
       document.getElementById("pdfIntegrations").textContent = selectedIntegrationLabels;
       document.getElementById("pdfFeatures").textContent = selectedFeatureLabels;
       document.getElementById("pdfFeatureWeeks").textContent = formatWeeks(featureWeeks);
       document.getElementById("pdfTemplateDays").textContent = formatDays(templateDays);
       document.getElementById("pdfIntegrationDays").textContent = formatDays(integrationDays);
-      document.getElementById("pdfUndocumentedNoteRow").hidden = !undocumentedProcess;
+      document.getElementById("pdfUndocumentedNoteRow").hidden = processDocumented;
     }
 
     function pdfEscape(value) {
@@ -961,97 +961,67 @@
         .replace(/\)/g, "\\)");
     }
 
-    function wrapCanvasText(ctx, text, maxWidth) {
-      const words = String(text).split(/\s+/).filter(Boolean);
-      const lines = [];
-      let current = "";
-      words.forEach((word) => {
-        const candidate = current ? `${current} ${word}` : word;
-        if (ctx.measureText(candidate).width <= maxWidth || !current) {
-          current = candidate;
-        } else {
-          lines.push(current);
-          current = word;
-        }
-      });
-      if (current) lines.push(current);
-      return lines;
-    }
-
-    function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, color) {
-      const lines = wrapCanvasText(ctx, text, maxWidth);
-      ctx.fillStyle = color;
-      lines.forEach((line, index) => {
-        ctx.fillText(line, x, y + (index * lineHeight));
-      });
-      return lines.length * lineHeight;
-    }
-
-    function drawRoundRect(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-      ctx.closePath();
-      if (fillStyle) {
-        ctx.fillStyle = fillStyle;
-        ctx.fill();
-      }
-      if (strokeStyle) {
-        ctx.strokeStyle = strokeStyle;
-        ctx.stroke();
-      }
-    }
-
-    function jpegDataUrlToBinary(dataUrl) {
-      const base64 = dataUrl.split(",")[1];
-      return atob(base64);
-    }
-
     function buildPdfBlob() {
-      const width = 1240;
-      const height = 1754;
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
+      const pageWidth = 612;
+      const pageHeight = 792;
+      const content = [];
 
-      ctx.fillStyle = "#f5f1ea";
-      ctx.fillRect(0, 0, width, height);
+      function add(command) {
+        content.push(command);
+      }
 
-      const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, "#ffffff");
-      gradient.addColorStop(1, "#efe9df");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(38, 38, width - 76, height - 76);
+      function rgb(r, g, b) {
+        return `${r} ${g} ${b} rg`;
+      }
 
-      drawRoundRect(ctx, 54, 54, width - 108, 220, 32, "#111111");
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "700 34px Avenir Next, Arial, sans-serif";
-      ctx.fillText("GUIDEcx LOE Calculator", 90, 116);
-      ctx.font = "600 18px Avenir Next, Arial, sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.72)";
-      ctx.fillText("Directional Estimate Summary", 90, 152);
-      ctx.font = "700 54px Avenir Next, Arial, sans-serif";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText("Implementation estimate", 90, 222);
+      function drawRect(x, y, w, h, fill) {
+        add(`${fill}`);
+        add(`${x} ${y} ${w} ${h} re f`);
+      }
 
-      ctx.font = "400 21px Avenir Next, Arial, sans-serif";
-      drawWrappedText(
-        ctx,
+      function drawText(text, x, y, size, color, font = "F1") {
+        add("BT");
+        add(`/${font} ${size} Tf`);
+        add(`${color}`);
+        add(`1 0 0 1 ${x} ${y} Tm`);
+        add(`(${pdfEscape(text)}) Tj`);
+        add("ET");
+      }
+
+      function wrapText(text, maxChars) {
+        const words = String(text).split(/\s+/).filter(Boolean);
+        const lines = [];
+        let current = "";
+        words.forEach((word) => {
+          const candidate = current ? `${current} ${word}` : word;
+          if (candidate.length <= maxChars || !current) {
+            current = candidate;
+          } else {
+            lines.push(current);
+            current = word;
+          }
+        });
+        if (current) lines.push(current);
+        return lines;
+      }
+
+      drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
+      drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
+      drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
+
+      drawText("GUIDEcx LOE Calculator", 64, 710, 22, rgb(1, 1, 1), "F2");
+      drawText("Directional Estimate Summary", 64, 688, 10, rgb(0.82, 0.82, 0.82));
+      drawText("Implementation estimate", 64, 646, 30, rgb(1, 1, 1), "F2");
+
+      const introLines = wrapText(
         "This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.",
-        90,
-        320,
-        width - 180,
-        32,
-        "#5e5953"
+        92
       );
+      let introY = 592;
+      introLines.forEach((line) => {
+        drawText(line, 64, introY, 11, rgb(0.38, 0.36, 0.33));
+        introY -= 16;
+      });
 
       const cards = [
         ["Building Tasks", document.getElementById("pdfBuildingTasks").textContent],
@@ -1061,45 +1031,46 @@
       ];
 
       const cardY = 430;
-      const cardWidth = 262;
-      const cardGap = 20;
+      const cardW = 114;
+      const cardH = 92;
+      const cardGap = 10;
       cards.forEach((card, index) => {
-        const x = 90 + (index * (cardWidth + cardGap));
-        drawRoundRect(ctx, x, cardY, cardWidth, 180, 26, "#fbfaf7", "#ddd6cb");
-        ctx.fillStyle = "#6a645d";
-        ctx.font = "700 18px Avenir Next, Arial, sans-serif";
-        ctx.fillText(card[0], x + 24, cardY + 46);
-        ctx.fillStyle = "#111111";
-        ctx.font = index === 3 ? "700 34px Avenir Next, Arial, sans-serif" : "700 40px Avenir Next, Arial, sans-serif";
-        drawWrappedText(ctx, card[1], x + 24, cardY + 108, cardWidth - 48, 40, "#111111");
+        const x = 64 + (index * (cardW + cardGap));
+        drawRect(x, cardY, cardW, cardH, rgb(0.97, 0.96, 0.94));
+        drawText(card[0], x + 10, cardY + 68, 9, rgb(0.42, 0.39, 0.36), "F2");
+        const valueLines = wrapText(card[1], 16);
+        let valueY = cardY + 38;
+        valueLines.forEach((line) => {
+          drawText(line, x + 10, valueY, 16, rgb(0.07, 0.07, 0.07), "F2");
+          valueY -= 18;
+        });
       });
 
-      drawRoundRect(ctx, 90, 660, 510, 820, 30, "#fffdfa", "#ddd6cb");
-      drawRoundRect(ctx, 640, 660, 510, 820, 30, "#fffdfa", "#ddd6cb");
+      drawRect(64, 120, 230, 278, rgb(0.99, 0.99, 0.98));
+      drawRect(318, 120, 230, 278, rgb(0.99, 0.99, 0.98));
 
-      ctx.fillStyle = "#111111";
-      ctx.font = "700 28px Avenir Next, Arial, sans-serif";
-      ctx.fillText("Project Inputs", 124, 718);
-      ctx.fillText("Estimate Notes", 674, 718);
+      drawText("Project Inputs", 80, 372, 18, rgb(0.07, 0.07, 0.07), "F2");
+      drawText("Estimate Notes", 334, 372, 18, rgb(0.07, 0.07, 0.07), "F2");
 
       const leftRows = [
         ["Company Name", document.getElementById("pdfCompanyName").textContent],
         ["Total Teams", document.getElementById("pdfTeams").textContent],
         ["Total Tasks", document.getElementById("pdfTasks").textContent],
-        ["Undocumented Process", document.getElementById("pdfUndocumented").textContent],
+        ["Process is documented", document.getElementById("pdfDocumented").textContent],
         ["Selected Integrations", document.getElementById("pdfIntegrations").textContent],
         ["Additional Features", document.getElementById("pdfFeatures").textContent]
       ];
 
-      let leftY = 790;
+      let leftY = 338;
       leftRows.forEach(([label, value]) => {
-        ctx.fillStyle = "#6a645d";
-        ctx.font = "700 16px Avenir Next, Arial, sans-serif";
-        ctx.fillText(label.toUpperCase(), 124, leftY);
-        ctx.fillStyle = "#111111";
-        ctx.font = "600 22px Avenir Next, Arial, sans-serif";
-        const used = drawWrappedText(ctx, value, 124, leftY + 38, 420, 30, "#111111");
-        leftY += Math.max(92, used + 48);
+        drawText(label.toUpperCase(), 80, leftY, 8, rgb(0.42, 0.39, 0.36), "F2");
+        leftY -= 16;
+        const lines = wrapText(value, 28);
+        lines.forEach((line) => {
+          drawText(line, 80, leftY, 12, rgb(0.07, 0.07, 0.07), "F2");
+          leftY -= 14;
+        });
+        leftY -= 10;
       });
 
       const rightRows = [
@@ -1108,66 +1079,42 @@
         ["Integration Days", document.getElementById("pdfIntegrationDays").textContent]
       ];
 
-      let rightY = 790;
+      let rightY = 330;
       rightRows.forEach(([label, value]) => {
-        drawRoundRect(ctx, 674, rightY - 26, 442, 118, 24, "#f4efe6", null);
-        ctx.fillStyle = "#6a645d";
-        ctx.font = "700 16px Avenir Next, Arial, sans-serif";
-        ctx.fillText(label.toUpperCase(), 704, rightY + 6);
-        ctx.fillStyle = "#111111";
-        ctx.font = "700 34px Avenir Next, Arial, sans-serif";
-        ctx.fillText(value, 704, rightY + 62);
-        rightY += 146;
+        drawRect(334, rightY - 18, 198, 58, rgb(0.95, 0.93, 0.90));
+        drawText(label.toUpperCase(), 346, rightY + 18, 8, rgb(0.42, 0.39, 0.36), "F2");
+        drawText(value, 346, rightY - 2, 18, rgb(0.07, 0.07, 0.07), "F2");
+        rightY -= 74;
       });
 
-      drawRoundRect(ctx, 674, 1250, 442, 180, 24, "#111111", null);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "700 22px Avenir Next, Arial, sans-serif";
-      ctx.fillText("Timeline Readout", 704, 1300);
-      ctx.font = "400 22px Avenir Next, Arial, sans-serif";
-      drawWrappedText(
-        ctx,
+      drawRect(334, 126, 198, 86, rgb(0.07, 0.07, 0.07));
+      drawText("Timeline Readout", 346, 186, 14, rgb(1, 1, 1), "F2");
+      const timelineLines = wrapText(
         `Based on the current inputs, the recommended target go-live is ${document.getElementById("pdfGoLive").textContent}.`,
-        704,
-        1348,
-        380,
-        32,
-        "rgba(255,255,255,0.82)"
+        30
       );
+      let timelineY = 162;
+      timelineLines.forEach((line) => {
+        drawText(line, 346, timelineY, 11, rgb(0.84, 0.84, 0.84));
+        timelineY -= 14;
+      });
 
       if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
-        drawRoundRect(ctx, 90, 1510, width - 180, 110, 24, "#f1e2d4", null);
-        ctx.fillStyle = "#8f4e21";
-        ctx.font = "700 18px Avenir Next, Arial, sans-serif";
-        ctx.fillText("Timeline Consideration", 124, 1560);
-        ctx.fillStyle = "#51331b";
-        ctx.font = "400 20px Avenir Next, Arial, sans-serif";
-        drawWrappedText(
-          ctx,
-          "Undocumented processes can extend timelines on average of two weeks.",
-          124,
-          1598,
-          width - 248,
-          28,
-          "#51331b"
-        );
+        drawRect(64, 56, pageWidth - 128, 42, rgb(0.95, 0.89, 0.84));
+        drawText("Timeline Consideration", 80, 80, 10, rgb(0.56, 0.31, 0.13), "F2");
+        drawText("Undocumented processes can extend timelines on average of two weeks.", 190, 80, 10, rgb(0.32, 0.20, 0.11));
       }
 
-      ctx.fillStyle = "#8b857d";
-      ctx.font = "400 16px Avenir Next, Arial, sans-serif";
-      ctx.fillText(`Prepared ${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`, 90, height - 92);
+      drawText(`Prepared ${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`, 64, 36, 9, rgb(0.55, 0.52, 0.49));
 
-      const jpegUrl = canvas.toDataURL("image/jpeg", 0.92);
-      const jpegBinary = jpegDataUrlToBinary(jpegUrl);
-      const imageWidth = 612;
-      const imageHeight = (height / width) * imageWidth;
-
+      const stream = content.join("\n");
       const objects = [
         "<< /Type /Catalog /Pages 2 0 R >>",
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 ${imageHeight.toFixed(2)}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`,
-        `<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBinary.length} >>\nstream\n${jpegBinary}\nendstream`,
-        `<< /Length 38 >>\nstream\nq\n612 0 0 ${imageHeight.toFixed(2)} 0 0 cm\n/Im0 Do\nQ\nendstream`
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`
       ];
 
       let pdf = "%PDF-1.4\n";
