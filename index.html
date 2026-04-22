@@ -629,6 +629,7 @@
             <label>
               Process is Documented
               <select id="processDocumented" name="processDocumented">
+                <option value="">Select Yes or No</option>
                 <option value="no">No</option>
                 <option value="yes">Yes</option>
               </select>
@@ -712,6 +713,17 @@
             </div>
           </div>
 
+          <div class="field-grid" style="margin-top: 16px;">
+            <label>
+              Target Go-Live
+              <input id="targetGoLive" name="targetGoLive" type="date">
+            </label>
+            <label>
+              Weekly Hours Needed For Target
+              <input id="targetWeeklyHoursNeeded" type="text" value="Select a target date" readonly>
+            </label>
+          </div>
+
           <div class="breakdown">
             <div class="breakdown-row"><span>Feature weeks</span><strong id="featureWeeks">0.0 weeks</strong></div>
             <div class="breakdown-row"><span>Undocumented process adjustment</span><strong id="undocumentedWeeks">0.0 weeks</strong></div>
@@ -727,6 +739,10 @@
 
   <section class="pdf-sheet" id="pdfSheet">
     <img class="pdf-brand" src="assets/guidecx-full-white.png" alt="GUIDEcx LOE Calculator branding">
+    <div hidden aria-hidden="true">
+      <span id="pdfCompanyName">Not provided</span>
+      <span id="pdfUserName">Not provided</span>
+    </div>
     <p>
       This estimate is for planning and alignment and is based on what is currently known, including process documentation and integrations required for go-live.
     </p>
@@ -737,32 +753,31 @@
     <div class="pdf-grid">
       <div class="pdf-card">
         <span>Building Tasks</span>
-        <strong id="pdfBuildingTasks">0.0 hrs</strong>
+        <strong id="pdfMetricBuildingTasks">0.0 hrs</strong>
       </div>
       <div class="pdf-card">
         <span>Template Build</span>
-        <strong id="pdfTemplateWeeks">0.0 weeks</strong>
+        <strong id="pdfMetricTemplateWeeks">0.0 weeks</strong>
       </div>
       <div class="pdf-card">
         <span>Integrations</span>
-        <strong id="pdfIntegrationWeeks">0.0 weeks</strong>
+        <strong id="pdfMetricIntegrationWeeks">0.0 weeks</strong>
       </div>
       <div class="pdf-card">
-        <span>Projected Go-Live</span>
-        <strong id="pdfGoLive">TBD</strong>
+        <span id="pdfMetricGoLiveLabel">Projected Go-Live</span>
+        <strong id="pdfMetricGoLive">TBD</strong>
       </div>
     </div>
 
     <table class="pdf-table">
-      <tr><td>Company name</td><td id="pdfCompanyName">Not provided</td></tr>
-      <tr><td>User name</td><td id="pdfUserName">Not provided</td></tr>
       <tr><td>Process is documented</td><td id="pdfDocumented">Yes</td></tr>
       <tr><td>Effort</td><td id="pdfBuildingTasks">0.0 hrs</td></tr>
       <tr><td>Weekly hours commit</td><td id="pdfWeeklyHours">0 hrs</td></tr>
       <tr><td>Total weeks</td><td id="pdfTemplateWeeks">0.0 weeks</td></tr>
       <tr><td>Integrations</td><td id="pdfIntegrations">None</td></tr>
       <tr><td>Additional feature implementation</td><td id="pdfFeatures">None</td></tr>
-      <tr><td>Projected go-live</td><td id="pdfGoLive">TBD</td></tr>
+      <tr id="pdfTargetHoursRow" hidden><td>Weekly hours needed for target</td><td id="pdfTargetWeeklyHours">TBD</td></tr>
+      <tr><td id="pdfGoLiveLabel">Projected go-live</td><td id="pdfGoLive">TBD</td></tr>
       <tr id="pdfUndocumentedNoteRow" hidden><td colspan="2" id="pdfUndocumentedNote">Undocumented processes can extend timelines on average of two weeks.</td></tr>
     </table>
   </section>
@@ -791,6 +806,7 @@
       "templateWeeklyHours",
       "teams",
       "processDocumented",
+      "targetGoLive",
       "integrationOther",
       "featureOther"
     ];
@@ -857,6 +873,15 @@
         month: "short",
         day: "numeric"
       });
+    }
+
+    function diffDays(from, to) {
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const fromMid = new Date(from);
+      const toMid = new Date(to);
+      fromMid.setHours(0, 0, 0, 0);
+      toMid.setHours(0, 0, 0, 0);
+      return Math.round((toMid - fromMid) / msPerDay);
     }
 
     function getState() {
@@ -937,11 +962,13 @@
 
       const totalTasks = num("totalTasks");
       const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0);
-      const processDocumented = document.getElementById("processDocumented").value === "yes";
+      const processDocumentedValue = document.getElementById("processDocumented").value;
+      const processDocumented = processDocumentedValue === "yes";
+      const processDocumentedSelected = processDocumentedValue === "yes" || processDocumentedValue === "no";
       const buildingTasksHours = (totalTasks * 7) / 60;
       const selectedFeatureValues = selectedValues("features");
       const featureWeeks = selectedFeatureValues.includes("timeTracking") || selectedFeatureValues.includes("resourceManagement") ? 1 : 0;
-      const undocumentedWeeks = processDocumented ? 0 : 2;
+      const undocumentedWeeks = processDocumentedSelected ? (processDocumented ? 0 : 2) : 0;
       const templateWeeks = weeklyTemplateHours > 0 ? (buildingTasksHours / weeklyTemplateHours) + featureWeeks + undocumentedWeeks : featureWeeks + undocumentedWeeks;
 
       let integrations = selectedValues("integrations");
@@ -954,6 +981,18 @@
       const projectedGoLive = new Date();
       projectedGoLive.setHours(12, 0, 0, 0);
       projectedGoLive.setDate(projectedGoLive.getDate() + Math.round(templateDays));
+      const targetGoLiveValue = document.getElementById("targetGoLive").value;
+      let targetGoLive = null;
+      let targetWeeklyHours = null;
+      if (targetGoLiveValue) {
+        targetGoLive = new Date(`${targetGoLiveValue}T12:00:00`);
+        const daysUntilTarget = diffDays(new Date(), targetGoLive);
+        const targetWeeksAvailable = daysUntilTarget / 7;
+        const buildOnlyWeeks = targetWeeksAvailable - featureWeeks - undocumentedWeeks;
+        if (buildOnlyWeeks > 0) {
+          targetWeeklyHours = buildingTasksHours / buildOnlyWeeks;
+        }
+      }
 
       const selectedIntegrationLabels = integrations.length ? integrations.map((value) => labelForValue("integrations", value)).join(", ") : "None";
       const selectedFeatureLabels = joinedLabels("features");
@@ -968,18 +1007,34 @@
       document.getElementById("integrationDays").textContent = formatDays(integrationDays);
       document.getElementById("selectedIntegrations").textContent = selectedIntegrationLabels;
       document.getElementById("selectedFeatures").textContent = selectedFeatureLabels;
+      if (!targetGoLiveValue) {
+        document.getElementById("targetWeeklyHoursNeeded").value = "Select a target date";
+      } else if (targetWeeklyHours && Number.isFinite(targetWeeklyHours) && targetWeeklyHours > 0) {
+        document.getElementById("targetWeeklyHoursNeeded").value = formatHours(targetWeeklyHours);
+      } else {
+        document.getElementById("targetWeeklyHoursNeeded").value = "Timeline not achievable";
+      }
 
-      document.getElementById("pdfBuildingTasks").textContent = formatHours(buildingTasksHours);
-      document.getElementById("pdfTemplateWeeks").textContent = formatWeeks(templateWeeks);
-      document.getElementById("pdfIntegrationWeeks").textContent = formatWeeks(integrationWeeks);
-      document.getElementById("pdfGoLive").textContent = formatDate(projectedGoLive);
+      document.getElementById("pdfMetricBuildingTasks").textContent = formatHours(buildingTasksHours);
+      document.getElementById("pdfMetricTemplateWeeks").textContent = formatWeeks(templateWeeks);
+      document.getElementById("pdfMetricIntegrationWeeks").textContent = formatWeeks(integrationWeeks);
+      document.getElementById("pdfMetricGoLive").textContent = formatDate(targetGoLive || projectedGoLive);
+      document.getElementById("pdfMetricGoLiveLabel").textContent = targetGoLive ? "Target Go-Live" : "Projected Go-Live";
       document.getElementById("pdfCompanyName").textContent = document.getElementById("companyName").value.trim() || "Not provided";
       document.getElementById("pdfUserName").textContent = document.getElementById("userName").value.trim() || "Not provided";
-      document.getElementById("pdfDocumented").textContent = processDocumented ? "Yes" : "No";
-      document.getElementById("pdfWeeklyHours").textContent = `${weeklyTemplateHours} hrs`;
+      document.getElementById("pdfDocumented").textContent = processDocumentedSelected ? (processDocumented ? "Yes" : "No") : "Not selected";
+      document.getElementById("pdfWeeklyHours").textContent = targetGoLive && targetWeeklyHours && Number.isFinite(targetWeeklyHours) && targetWeeklyHours > 0
+        ? formatHours(targetWeeklyHours)
+        : `${weeklyTemplateHours} hrs`;
+      document.getElementById("pdfTargetWeeklyHours").textContent = targetWeeklyHours && Number.isFinite(targetWeeklyHours) && targetWeeklyHours > 0
+        ? formatHours(targetWeeklyHours)
+        : "Timeline not achievable";
+      document.getElementById("pdfTargetHoursRow").hidden = !targetGoLive;
       document.getElementById("pdfIntegrations").textContent = selectedIntegrationLabels;
       document.getElementById("pdfFeatures").textContent = selectedFeatureLabels;
-      document.getElementById("pdfUndocumentedNoteRow").hidden = processDocumented;
+      document.getElementById("pdfGoLiveLabel").textContent = targetGoLive ? "Target go-live" : "Projected go-live";
+      document.getElementById("pdfGoLive").textContent = formatDate(targetGoLive || projectedGoLive);
+      document.getElementById("pdfUndocumentedNoteRow").hidden = !processDocumentedSelected || processDocumented;
     }
 
     function pdfEscape(value) {
@@ -1037,7 +1092,8 @@
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
       drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
       drawText("GUIDEcx | LOE Calculator", 64, 694, 28, rgb(1, 1, 1), "F2");
-      drawText("Estimate GUIDEcx implementation timeline and effort.", 64, 664, 12, rgb(0.84, 0.84, 0.84), "F2");
+      drawText(`Estimate Prepared For: ${document.getElementById("pdfCompanyName").textContent}`, 64, 680, 12, rgb(0.84, 0.84, 0.84), "F2");
+      drawText(`Prepared By: ${document.getElementById("pdfUserName").textContent}`, 64, 660, 12, rgb(0.84, 0.84, 0.84), "F2");
 
       const introLines = wrapText(
         "This estimate is for planning and alignment and is based on what is currently known, including process documentation and integrations required for go-live.",
@@ -1054,18 +1110,18 @@
         92
       );
       noteLines.forEach((line) => {
-        drawText(line, 64, introY, 11, rgb(0.38, 0.36, 0.33), "F2");
-        introY -= 16;
+        drawText(line, 64, introY, 8, rgb(0.38, 0.36, 0.33));
+        introY -= 14;
       });
       introY -= 28;
 
       drawText("SUMMARY", 64, introY, 13, rgb(0.42, 0.39, 0.36), "F2");
 
       const cards = [
-        ["Building Tasks", document.getElementById("pdfBuildingTasks").textContent],
-        ["Template Build", document.getElementById("pdfTemplateWeeks").textContent],
-        ["Integrations", document.getElementById("pdfIntegrationWeeks").textContent],
-        ["Projected Go-Live", document.getElementById("pdfGoLive").textContent]
+        ["Building Tasks", document.getElementById("pdfMetricBuildingTasks").textContent],
+        ["Template Build", document.getElementById("pdfMetricTemplateWeeks").textContent],
+        ["Integrations", document.getElementById("pdfMetricIntegrationWeeks").textContent],
+        [document.getElementById("pdfMetricGoLiveLabel").textContent, document.getElementById("pdfMetricGoLive").textContent]
       ];
 
       const cardY = introY - 112;
@@ -1085,34 +1141,32 @@
       });
 
       drawRect(64, 56, 484, 296, rgb(0.99, 0.99, 0.98));
-      drawText("Company Name".toUpperCase(), 80, 328, 8, rgb(0.42, 0.39, 0.36), "F2");
-      drawText(document.getElementById("pdfCompanyName").textContent, 80, 310, 13, rgb(0.07, 0.07, 0.07), "F2");
-      drawText("User Name".toUpperCase(), 300, 328, 8, rgb(0.42, 0.39, 0.36), "F2");
-      drawText(document.getElementById("pdfUserName").textContent, 300, 310, 13, rgb(0.07, 0.07, 0.07), "F2");
-
-      drawText("Template Build", 80, 274, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawRect(80, 118, 210, 140, rgb(0.97, 0.96, 0.94));
+      drawText("Template Build", 80, 318, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawRect(80, 154, 210, 146, rgb(0.97, 0.96, 0.94));
       const templateRows = [
         ["Process is documented", document.getElementById("pdfDocumented").textContent],
         ["Effort", document.getElementById("pdfBuildingTasks").textContent],
         ["Weekly Hours Commit", document.getElementById("pdfWeeklyHours").textContent],
         ["Total Weeks", document.getElementById("pdfTemplateWeeks").textContent]
       ];
-      let templateY = 236;
+      let templateY = 278;
       templateRows.forEach(([label, value]) => {
         drawText(label.toUpperCase(), 94, templateY, 8, rgb(0.42, 0.39, 0.36), "F2");
         drawText(value, 204, templateY, 11, rgb(0.07, 0.07, 0.07), "F2");
         templateY -= 30;
       });
 
-      drawText("Integrations", 318, 274, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawRect(318, 98, 214, 160, rgb(0.97, 0.96, 0.94));
+      drawText("Integrations", 318, 318, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawRect(318, 134, 214, 166, rgb(0.97, 0.96, 0.94));
       const integrationRows = [
         ["Integrations", document.getElementById("pdfIntegrations").textContent],
         ["Additional Feature Implementation", document.getElementById("pdfFeatures").textContent],
-        ["Projected Go-Live", document.getElementById("pdfGoLive").textContent]
+        [document.getElementById("pdfGoLiveLabel").textContent.replace("go-live", "Go-Live"), document.getElementById("pdfGoLive").textContent]
       ];
-      let integrationY = 236;
+      if (!document.getElementById("pdfTargetHoursRow").hidden) {
+        integrationRows.splice(2, 0, ["Weekly Hours Needed For Target", document.getElementById("pdfTargetWeeklyHours").textContent]);
+      }
+      let integrationY = 278;
       integrationRows.forEach(([label, value]) => {
         drawText(label.toUpperCase(), 332, integrationY, 8, rgb(0.42, 0.39, 0.36), "F2");
         integrationY -= 16;
