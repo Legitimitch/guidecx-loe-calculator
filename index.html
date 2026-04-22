@@ -136,7 +136,7 @@
       border: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.82);
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: 1.64rem;
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -587,7 +587,7 @@
         </div>
 
         <div class="hero-copy">
-          <div class="eyebrow">Directional Estimate Tool</div>
+          <div class="eyebrow">Level of Effort Calculator</div>
           <h1>Estimate your GUIDEcx Implementation and Onboarding LOE and Timeline.</h1>
           <p>
             *Timelines may be dramatically reduced if process assets are shared for import.
@@ -736,6 +736,9 @@
     <img class="pdf-brand" src="assets/guidecx-full-white.png" alt="GUIDEcx LOE Calculator branding">
     <p>
       This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.
+    </p>
+    <p>
+      *Timelines may be dramatically reduced if process assets are shared for import, or scope of integrations change.
     </p>
 
     <div class="pdf-grid">
@@ -943,7 +946,7 @@
       const totalTasks = num("totalTasks");
       const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0);
       const processDocumented = document.getElementById("processDocumented").value === "yes";
-      const buildingTasksHours = ((totalTasks * 7) / 60) + 4;
+      const buildingTasksHours = (totalTasks * 7) / 60;
       const selectedFeatureValues = selectedValues("features");
       const featureWeeks = selectedFeatureValues.includes("timeTracking") || selectedFeatureValues.includes("resourceManagement") ? 1 : 0;
       const undocumentedWeeks = processDocumented ? 0 : 2;
@@ -1045,10 +1048,8 @@
       drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
       drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
-      drawText("GUIDEcx", 118, 688, 36, rgb(1, 1, 1), "F2");
-      drawText("CX", 244, 701, 18, rgb(1, 1, 1), "F2");
-      drawText("|", 300, 688, 32, rgb(1, 1, 1));
-      drawText("LOE Calculator", 334, 688, 32, rgb(1, 1, 1), "F2");
+      drawText("GUIDEcx | LOE Calculator", 148, 694, 28, rgb(1, 1, 1), "F2");
+      drawText("Estimate Level of Effort | GUIDEcx Implementation", 122, 664, 11, rgb(0.84, 0.84, 0.84), "F2");
 
       const introLines = wrapText(
         "This estimate is intended for planning and alignment. It reflects what is known or shared at the time, process evolution, and critical integrations expressed as required for go-live as opposed to completed post go-live.",
@@ -1057,6 +1058,15 @@
       let introY = 592;
       introLines.forEach((line) => {
         drawText(line, 64, introY, 11, rgb(0.38, 0.36, 0.33));
+        introY -= 16;
+      });
+      introY -= 8;
+      const noteLines = wrapText(
+        "*Timelines may be dramatically reduced if process assets are shared for import, or scope of integrations change.",
+        92
+      );
+      noteLines.forEach((line) => {
+        drawText(line, 64, introY, 11, rgb(0.38, 0.36, 0.33), "F2");
         introY -= 16;
       });
 
