@@ -47,7 +47,8 @@
 
     button,
     input,
-    select {
+    select,
+    textarea {
       font: inherit;
     }
 
@@ -255,7 +256,8 @@
     }
 
     input,
-    select {
+    select,
+    textarea {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
@@ -264,6 +266,11 @@
       padding: 13px 14px;
       min-height: 52px;
       transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 108px;
     }
 
     .template-grid {
@@ -279,7 +286,8 @@
     }
 
     input:focus,
-    select:focus {
+    select:focus,
+    textarea:focus {
       outline: none;
       border-color: var(--line-strong);
       box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
@@ -425,6 +433,20 @@
     .metric-line-single strong {
       text-align: left;
       line-height: 1.45;
+    }
+
+    .metric-note {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .metric-note label {
+      gap: 6px;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
     .info-bubble {
@@ -727,6 +749,19 @@
       line-height: 1.45;
     }
 
+    #pdf-print .pdf-notes {
+      display: grid;
+      gap: 6px;
+    }
+
+    #pdf-print .pdf-notes p {
+      margin: 0;
+      font-size: 8.5pt;
+      color: #555555;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
     #pdf-print .pdf-footnote {
       margin: 0;
       font-size: 7.5pt;
@@ -826,7 +861,7 @@
           <div class="eyebrow">Level of Effort Calculator</div>
           <h1>Estimate your GUIDEcx implementation timeline and effort.</h1>
           <p>
-            *Timelines may be dramatically reduced if process assets are shared for import.
+            *Timelines may be reduced if process assets are shared for import.
           </p>
         </div>
 
@@ -997,6 +1032,10 @@
                 <button class="info-bubble" type="button" aria-label="Projected Go-Live calculation info" data-tip="Projected go-live uses the later of the two workstreams: template build or integrations. Integrations include a 1-week offset to reflect starting during week 2 of the implementation.">i</button>
               </div>
               <strong id="goLiveDateDisplay">TBD</strong>
+              <div class="metric-note">
+                <label for="summaryNotes">Notes</label>
+                <textarea id="summaryNotes" name="summaryNotes" placeholder="Add estimate notes to include in the downloaded summary."></textarea>
+              </div>
             </div>
             <button class="button primary" id="downloadSummaryButton" type="button">Download Estimate Summary</button>
           </div>
@@ -1071,6 +1110,11 @@
       <section class="pdf-callout">
         <h2>&#9889; Want to reduce template build time significantly?</h2>
         <p>If you share your process assets (SOPs, flowcharts, spreadsheets) we'll build your foundation for you. Our team uses AI to map your existing workflows into GUIDEcx-ready templates &mdash; your template sessions start from a working draft, not a blank slate.</p>
+      </section>
+
+      <section class="pdf-notes">
+        <div class="pdf-section-label">Notes</div>
+        <p id="pdfNotes">None provided.</p>
       </section>
 
       <p class="pdf-footnote">* Integration hours require a formal scoping call to determine complexity and to define what must be live at go-live versus what can be delivered post go-live.</p>
@@ -1174,6 +1218,11 @@
     function displayValue(value, fallback = "Not provided") {
       const trimmed = String(value ?? "").trim();
       return trimmed || fallback;
+    }
+
+    function displayMultilineValue(value, fallback = "None provided.") {
+      const normalized = String(value ?? "").replace(/\r\n/g, "\n").trim();
+      return normalized || fallback;
     }
 
     function safeFilenameSegment(value) {
@@ -1282,6 +1331,7 @@
       const integrationWeeklyHours = extractNumber(document.getElementById("integrationWeeklyHours").value);
       const documentedValue = document.getElementById("processDocumented").value;
       const documentedText = documentedValue === "yes" ? "Yes" : documentedValue === "no" ? "No" : "Not specified";
+      const notesText = displayMultilineValue(document.getElementById("summaryNotes").value);
       const integrationsSelected = displayValue(document.getElementById("selectedIntegrationsCard").textContent, "None");
       const featuresSelected = displayValue(document.getElementById("selectedFeaturesCard").textContent, "None");
       const templateHoursText = displayValue(document.getElementById("buildingTasksHours").textContent, "0.0 hrs");
@@ -1309,6 +1359,7 @@
       document.getElementById("pdfIntegrationsSelected").textContent = integrationsSelected;
       document.getElementById("pdfIntegrationWeeklyHours").textContent = integrationWeeklyHours ? `${integrationWeeklyHours} hrs/week` : "0 hrs/week";
       document.getElementById("pdfAdditionalFeatures").textContent = featuresSelected;
+      document.getElementById("pdfNotes").textContent = notesText;
     }
 
     function loadImage(src) {
@@ -1598,14 +1649,39 @@
 
       y += 96 + 14;
 
+      const footerY = pageHeight - padding - 28;
+
       ctx.fillStyle = "#AAAAAA";
       ctx.font = "italic 13px Avenir Next, Segoe UI, sans-serif";
       const footnoteLines = wrapCanvasText(ctx, document.querySelector(".pdf-footnote").textContent, contentWidth);
+      const footnoteHeight = footnoteLines.length * 16;
+      const notesLineHeight = 18;
+
+      ctx.fillStyle = "#999999";
+      ctx.font = "800 16px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillText("NOTES", padding, y);
+
+      y += 28;
+
+      ctx.fillStyle = "#555555";
+      ctx.font = "500 15px Avenir Next, Segoe UI, sans-serif";
+      const allNotesLines = String(document.getElementById("pdfNotes").textContent)
+        .split("\n")
+        .flatMap((line) => wrapCanvasText(ctx, line || " ", contentWidth));
+      const availableNotesHeight = Math.max(notesLineHeight, footerY - 24 - footnoteHeight - 14 - y);
+      const maxNotesLines = Math.max(1, Math.floor(availableNotesHeight / notesLineHeight));
+      const notesLines = allNotesLines.slice(0, maxNotesLines);
+      notesLines.forEach((line, index) => {
+        ctx.fillText(line, padding, y + (index * notesLineHeight));
+      });
+
+      y += Math.max(32, notesLines.length * notesLineHeight) + 14;
+
+      ctx.fillStyle = "#AAAAAA";
+      ctx.font = "italic 13px Avenir Next, Segoe UI, sans-serif";
       footnoteLines.forEach((line, index) => {
         ctx.fillText(line, padding, y + (index * 16));
       });
-
-      const footerY = pageHeight - padding - 28;
       ctx.fillStyle = "#1A1A1A";
       ctx.fillRect(padding, footerY - 10, contentWidth, 2);
       ctx.font = "800 14px Avenir Next, Segoe UI, sans-serif";
