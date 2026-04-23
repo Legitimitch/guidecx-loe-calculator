@@ -488,10 +488,6 @@
       font-size: 0.9rem;
     }
 
-    .pdf-sheet {
-      display: none;
-    }
-
     @media (max-width: 980px) {
       .layout {
         grid-template-columns: 1fr;
@@ -523,100 +519,6 @@
       }
     }
 
-    @media print {
-      body {
-        background: white;
-      }
-
-      .page-shell {
-        display: none;
-      }
-
-      .pdf-sheet {
-        display: block;
-        padding: 34px;
-        color: #111111;
-      }
-
-      .pdf-brand {
-        width: 420px;
-        max-width: 100%;
-        margin-bottom: 28px;
-      }
-
-      .pdf-kicker {
-        display: inline-block;
-        margin-bottom: 12px;
-        padding: 6px 10px;
-        border: 1px solid #d6d1ca;
-        border-radius: 999px;
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #66625d;
-      }
-
-      .pdf-sheet h1 {
-        font-size: 34px;
-        line-height: 1;
-        letter-spacing: -0.04em;
-        margin-bottom: 10px;
-      }
-
-      .pdf-sheet p {
-        color: #66625d;
-        line-height: 1.55;
-        font-size: 14px;
-      }
-
-      .pdf-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        margin: 28px 0;
-      }
-
-      .pdf-card {
-        border: 1px solid #d6d1ca;
-        border-radius: 18px;
-        padding: 16px;
-        background: #faf8f4;
-      }
-
-      .pdf-card span {
-        display: block;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #66625d;
-        font-weight: 700;
-      }
-
-      .pdf-card strong {
-        display: block;
-        margin-top: 6px;
-        font-size: 28px;
-        letter-spacing: -0.04em;
-      }
-
-      .pdf-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-
-      .pdf-table td {
-        padding: 12px 0;
-        border-top: 1px solid #e6e0d9;
-        font-size: 14px;
-      }
-
-      .pdf-table td:last-child {
-        text-align: right;
-        font-weight: 700;
-        color: #111111;
-      }
-    }
   </style>
 </head>
 <body>
@@ -637,7 +539,6 @@
 
         <div class="hero-actions">
           <button class="button primary" id="copyLinkButton" type="button">Copy Share Link</button>
-          <button class="button secondary" id="downloadPdfButton" type="button">Download Summary PDF</button>
           <button class="button secondary" id="saveButton" type="button">Save Progress</button>
           <button class="button secondary" id="resetButton" type="button">Reset Inputs</button>
         </div>
@@ -798,53 +699,6 @@
     </div>
   </div>
 
-  <section class="pdf-sheet" id="pdfSheet">
-    <img class="pdf-brand" src="assets/guidecx-full-white.png" alt="GUIDEcx LOE Calculator branding">
-    <div hidden aria-hidden="true">
-      <span id="pdfCompanyName">Not provided</span>
-      <span id="pdfUserName">Not provided</span>
-      <span id="pdfMetricProjectWeeks">0.0 weeks</span>
-      <span id="pdfMetricTemplateTrackWeeks">0.0 weeks</span>
-      <span id="pdfMetricIntegrationTrackWeeks">0.0 weeks</span>
-    </div>
-    <p>
-      This estimate is for planning and alignment and is based on what is currently known, including process documentation and integrations required for go-live.
-    </p>
-    <p>
-      *Timelines may be dramatically reduced if process assets are shared for import, or scope of integrations change.
-    </p>
-
-    <div class="pdf-grid">
-      <div class="pdf-card">
-        <span>Building Tasks</span>
-        <strong id="pdfMetricBuildingTasks">0.0 hrs</strong>
-      </div>
-      <div class="pdf-card">
-        <span>Template Build</span>
-        <strong id="pdfMetricTemplateWeeks">0.0 weeks</strong>
-      </div>
-      <div class="pdf-card">
-        <span>Integrations</span>
-        <strong id="pdfMetricIntegrationWeeks">0.0 weeks</strong>
-      </div>
-      <div class="pdf-card">
-        <span id="pdfMetricGoLiveLabel">Projected Go-Live</span>
-        <strong id="pdfMetricGoLive">TBD</strong>
-      </div>
-    </div>
-
-    <table class="pdf-table">
-      <tr><td>Process is documented</td><td id="pdfDocumented">Yes</td></tr>
-      <tr><td>Effort</td><td id="pdfBuildingTasks">0.0 hrs</td></tr>
-      <tr><td>Weekly hours commit</td><td id="pdfWeeklyHours">0 hrs</td></tr>
-      <tr><td>Total weeks</td><td id="pdfTemplateWeeks">0.0 weeks</td></tr>
-      <tr><td>Integrations</td><td id="pdfIntegrations">None</td></tr>
-      <tr><td>Additional feature implementation</td><td id="pdfFeatures">None</td></tr>
-      <tr><td id="pdfGoLiveLabel">Projected go-live</td><td id="pdfGoLive">TBD</td></tr>
-      <tr id="pdfUndocumentedNoteRow" hidden><td colspan="2" id="pdfUndocumentedNote">Undocumented processes can extend timelines on average of two weeks.</td></tr>
-    </table>
-  </section>
-
   <script>
     const integrationOptions = [
       ["salesforce", "Salesforce"],
@@ -923,10 +777,6 @@
 
     function formatWeeks(value) {
       return `${round1(value).toFixed(1)} weeks`;
-    }
-
-    function formatDays(value) {
-      return `${Math.round(value)} days`;
     }
 
     function formatDate(date) {
@@ -1049,239 +899,6 @@
       document.getElementById("featureWeeksCard").textContent = formatWeeks(featureWeeks);
       document.getElementById("selectedIntegrationsCard").textContent = selectedIntegrationLabels;
       document.getElementById("selectedFeaturesCard").textContent = selectedFeatureLabels;
-
-      document.getElementById("pdfMetricBuildingTasks").textContent = formatHours(buildingTasksHours);
-      document.getElementById("pdfMetricTemplateWeeks").textContent = formatWeeks(templateBuildWeeks);
-      document.getElementById("pdfMetricIntegrationWeeks").textContent = formatWeeks(integrationWeeks);
-      document.getElementById("pdfMetricProjectWeeks").textContent = formatWeeks(projectWeeks);
-      document.getElementById("pdfMetricTemplateTrackWeeks").textContent = formatWeeks(templateTrackWeeks);
-      document.getElementById("pdfMetricIntegrationTrackWeeks").textContent = formatWeeks(integrationTrackWeeks);
-      document.getElementById("pdfMetricGoLive").textContent = formatDate(projectedGoLive);
-      document.getElementById("pdfMetricGoLiveLabel").textContent = "Projected Go-Live";
-      document.getElementById("pdfCompanyName").textContent = document.getElementById("companyName").value.trim() || "Not provided";
-      document.getElementById("pdfUserName").textContent = document.getElementById("userName").value.trim() || "Not provided";
-      document.getElementById("pdfDocumented").textContent = processDocumentedSelected ? (processDocumented ? "Yes" : "No") : "Not selected";
-      document.getElementById("pdfWeeklyHours").textContent = `${weeklyTemplateHours} hrs`;
-      document.getElementById("pdfIntegrations").textContent = selectedIntegrationLabels;
-      document.getElementById("pdfFeatures").textContent = selectedFeatureLabels;
-      document.getElementById("pdfGoLiveLabel").textContent = "Projected go-live";
-      document.getElementById("pdfGoLive").textContent = formatDate(projectedGoLive);
-      document.getElementById("pdfUndocumentedNoteRow").hidden = !processDocumentedSelected || processDocumented;
-    }
-
-    function pdfEscape(value) {
-      return String(value)
-        .replace(/\\/g, "\\\\")
-        .replace(/\(/g, "\\(")
-        .replace(/\)/g, "\\)");
-    }
-
-    function buildPdfBlob() {
-      const pageWidth = 612;
-      const pageHeight = 792;
-      const content = [];
-
-      function add(command) {
-        content.push(command);
-      }
-
-      function rgb(r, g, b) {
-        return `${r} ${g} ${b} rg`;
-      }
-
-      function drawRect(x, y, w, h, fill) {
-        add(`${fill}`);
-        add(`${x} ${y} ${w} ${h} re f`);
-      }
-
-      function drawText(text, x, y, size, color, font = "F1") {
-        add("BT");
-        add(`/${font} ${size} Tf`);
-        add(`${color}`);
-        add(`1 0 0 1 ${x} ${y} Tm`);
-        add(`(${pdfEscape(text)}) Tj`);
-        add("ET");
-      }
-
-      function drawStrokeRect(x, y, w, h, color, lineWidth = 1) {
-        add(`${lineWidth} w`);
-        add(`${color}`);
-        add(`${x} ${y} ${w} ${h} re S`);
-      }
-
-      function wrapText(text, maxChars) {
-        const words = String(text).split(/\s+/).filter(Boolean);
-        const lines = [];
-        let current = "";
-        words.forEach((word) => {
-          const candidate = current ? `${current} ${word}` : word;
-          if (candidate.length <= maxChars || !current) {
-            current = candidate;
-          } else {
-            lines.push(current);
-            current = word;
-          }
-        });
-        if (current) lines.push(current);
-        return lines;
-      }
-
-      function drawWrappedText(text, x, y, size, color, maxChars, lineHeight = 14, font = "F1") {
-        const lines = wrapText(text, maxChars);
-        let currentY = y;
-        lines.forEach((line) => {
-          drawText(line, x, currentY, size, color, font);
-          currentY -= lineHeight;
-        });
-        return currentY;
-      }
-
-      function drawLabelValueRows(x, startY, rows, valueMaxChars = 22, rowGap = 28) {
-        let y = startY;
-        rows.forEach(([label, value]) => {
-          drawText(String(label).toUpperCase(), x, y, 8, rgb(0.42, 0.39, 0.36), "F2");
-          y -= 14;
-          const lines = wrapText(value, valueMaxChars);
-          lines.forEach((line) => {
-            drawText(line, x, y, 12, rgb(0.07, 0.07, 0.07), "F2");
-            y -= 13;
-          });
-          y -= rowGap - 13;
-        });
-      }
-
-      function drawSummaryCard(x, y, w, h, title, primary, secondary = [], primarySize = 20) {
-        drawRect(x, y, w, h, rgb(1, 1, 1));
-        drawStrokeRect(x, y, w, h, "0.86 0.83 0.79 RG");
-        drawText(title.toUpperCase(), x + 16, y + h - 20, 8, rgb(0.42, 0.39, 0.36), "F2");
-        let currentY = y + h - 46;
-        currentY = drawWrappedText(primary, x + 16, currentY, primarySize, rgb(0.07, 0.07, 0.07), 18, primarySize + 4, "F2");
-        currentY -= 4;
-        secondary.forEach((line) => {
-          currentY = drawWrappedText(line, x + 16, currentY, 10, rgb(0.38, 0.36, 0.33), 30, 12);
-          currentY -= 2;
-        });
-      }
-
-      drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
-      drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
-      drawRect(48, 668, pageWidth - 96, 86, rgb(0.07, 0.07, 0.07));
-      drawText("GUIDEcx", 68, 726, 11, rgb(0.77, 0.77, 0.77), "F2");
-      drawText("Estimate Timeline & Effort", 68, 696, 24, rgb(1, 1, 1), "F2");
-
-      drawText(`Estimate Prepared For: ${document.getElementById("pdfCompanyName").textContent}`, 68, 638, 12, rgb(0.07, 0.07, 0.07), "F2");
-      drawText(`Prepared By: ${document.getElementById("pdfUserName").textContent}`, 68, 618, 12, rgb(0.07, 0.07, 0.07), "F2");
-      add("0.83 0.80 0.76 RG");
-      add("68 602 m 544 602 l S");
-
-      drawText("SUMMARY", 68, 576, 13, rgb(0.42, 0.39, 0.36), "F2");
-
-      drawSummaryCard(
-        68,
-        432,
-        220,
-        120,
-        "Template Build",
-        document.getElementById("pdfMetricTemplateWeeks").textContent,
-        [
-          `Effort: ${document.getElementById("pdfMetricBuildingTasks").textContent}`,
-          `Weekly Hours: ${document.getElementById("pdfWeeklyHours").textContent}`
-        ]
-      );
-
-      drawSummaryCard(
-        324,
-        432,
-        220,
-        120,
-        "Additional Features",
-        document.getElementById("pdfFeatures").textContent,
-        [
-          `Hours: ${document.getElementById("featureHours").textContent}`,
-          `Weeks: ${document.getElementById("featureWeeksCard").textContent}`
-        ],
-        13
-      );
-
-      drawSummaryCard(
-        68,
-        290,
-        220,
-        120,
-        "Integrations",
-        document.getElementById("pdfIntegrations").textContent,
-        [
-          `Hours: ${document.getElementById("integrationHours").textContent}`,
-          `Weeks: ${document.getElementById("pdfMetricIntegrationWeeks").textContent}`
-        ],
-        13
-      );
-
-      drawSummaryCard(
-        324,
-        290,
-        220,
-        120,
-        "Projected Go-Live",
-        document.getElementById("pdfMetricGoLive").textContent,
-        [
-          `Timeline: ${document.getElementById("pdfMetricProjectWeeks").textContent}`,
-          "Integrations begin in week 2"
-        ],
-        18
-      );
-
-      drawRect(68, 116, 220, 148, rgb(1, 1, 1));
-      drawStrokeRect(68, 116, 220, 148, "0.86 0.83 0.79 RG");
-      drawText("TEMPLATE BUILD DETAILS", 84, 238, 10, rgb(0.42, 0.39, 0.36), "F2");
-      drawLabelValueRows(84, 216, [
-        ["Process is Documented", document.getElementById("pdfDocumented").textContent],
-        ["Estimate Tasks", document.getElementById("totalTasks").value || "0"],
-        ["Total Teams", document.getElementById("teams").value || "0"],
-        ["Weekly Hours Commit", document.getElementById("pdfWeeklyHours").textContent]
-      ], 18, 16);
-
-      if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
-        drawRect(68, 78, pageWidth - 136, 24, rgb(0.95, 0.89, 0.84));
-        drawText("Undocumented processes typically add about two weeks to the overall timeline.", 84, 86, 9, rgb(0.32, 0.20, 0.11), "F2");
-      }
-
-      drawWrappedText(
-        "*Timelines may be dramatically reduced if process assets are shared for import, or scope of integrations change.",
-        68,
-        52,
-        8,
-        rgb(0.55, 0.52, 0.49),
-        94,
-        10
-      );
-
-      const stream = content.join("\n");
-      const objects = [
-        "<< /Type /Catalog /Pages 2 0 R >>",
-        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
-        `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`
-      ];
-
-      let pdf = "%PDF-1.4\n";
-      const offsets = [0];
-      objects.forEach((object, index) => {
-        offsets.push(pdf.length);
-        pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
-      });
-
-      const xrefStart = pdf.length;
-      pdf += `xref\n0 ${objects.length + 1}\n`;
-      pdf += "0000000000 65535 f \n";
-      offsets.slice(1).forEach((offset) => {
-        pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
-      });
-      pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
-
-      return new Blob([pdf], { type: "application/pdf" });
     }
 
     document.addEventListener("input", calculate);
@@ -1296,22 +913,6 @@
       } catch {
         setStatus("Clipboard access failed. Copy the full URL from the browser.");
       }
-    });
-
-    document.getElementById("downloadPdfButton").addEventListener("click", () => {
-      calculate();
-      const blob = buildPdfBlob();
-      const companyName = document.getElementById("companyName").value.trim() || "Company Name";
-      const safeName = `GUIDEcx & ${companyName} Estimate LOE`.replace(/[\\/:*?"<>|]/g, "-");
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${safeName}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      setStatus("PDF downloaded.");
     });
 
     document.getElementById("saveButton").addEventListener("click", () => {
