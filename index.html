@@ -146,7 +146,8 @@
       font-size: clamp(0.72rem, 1.3vw, 1.15rem);
       line-height: 0.93;
       letter-spacing: -0.05em;
-      max-width: 26ch;
+      max-width: none;
+      white-space: nowrap;
     }
 
     .hero p {
@@ -472,6 +473,7 @@
 
       .hero h1 {
         max-width: 14ch;
+        white-space: normal;
       }
     }
 
@@ -1058,7 +1060,7 @@
       drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
       drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
-      drawText("GUIDEcx | LOE Calculator", 64, 694, 28, rgb(1, 1, 1), "F2");
+      drawText("GUIDEcx | Estimate Implementation Timeline & Effort", 64, 694, 21, rgb(1, 1, 1), "F2");
       drawText(`Estimate Prepared For: ${document.getElementById("pdfCompanyName").textContent}`, 64, 680, 12, rgb(0.84, 0.84, 0.84), "F2");
       drawText(`Prepared By: ${document.getElementById("pdfUserName").textContent}`, 64, 660, 12, rgb(0.84, 0.84, 0.84), "F2");
 
@@ -1080,64 +1082,33 @@
         drawText(line, 64, introY, 8, rgb(0.38, 0.36, 0.33));
         introY -= 14;
       });
-      const sectionTop = introY - 6;
-      const leftX = 64;
-      const rightX = 318;
-      const colW = 230;
+      drawText("SUMMARY", 64, introY, 13, rgb(0.42, 0.39, 0.36), "F2");
 
-      drawRect(leftX, 392, colW, 148, rgb(0.99, 0.99, 0.98));
-      drawText("Estimate Details", leftX + 16, 518, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawLabelValueRows(leftX + 16, 492, [
-        ["Company Name", document.getElementById("pdfCompanyName").textContent],
-        ["User Name", document.getElementById("pdfUserName").textContent]
-      ], 24, 30);
+      drawRect(64, 82, 484, 468, rgb(0.99, 0.99, 0.98));
 
-      drawRect(rightX, 392, colW, 148, rgb(0.99, 0.99, 0.98));
-      drawText("Template Build", rightX + 16, 518, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawLabelValueRows(rightX + 16, 492, [
+      drawText("Template Build", 84, 522, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawLabelValueRows(84, 496, [
         ["Process is Documented", document.getElementById("pdfDocumented").textContent],
-        ["Estimate Total Tasks", document.getElementById("totalTasks").value || "0"],
+        ["Estimate Tasks", document.getElementById("totalTasks").value || "0"],
         ["Total Teams", document.getElementById("teams").value || "0"],
-        ["Weekly Hours Commit", document.getElementById("templateWeeklyHours").value ? `${document.getElementById("templateWeeklyHours").value} hrs` : "0 hrs"]
-      ], 20, 18);
+        ["Weekly Hours Commit", document.getElementById("templateWeeklyHours").value ? `${document.getElementById("templateWeeklyHours").value} hrs` : "0 hrs"],
+        ["Weeks", document.getElementById("pdfMetricTemplateWeeks").textContent]
+      ], 22, 18);
 
-      drawRect(leftX, 224, colW, 146, rgb(0.99, 0.99, 0.98));
-      drawText("Critical Integrations", leftX + 16, 348, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawLabelValueRows(leftX + 16, 322, [
-        ["Required Integrations", document.getElementById("pdfIntegrations").textContent]
-      ], 24, 18);
+      drawText("Integrations", 330, 522, 16, rgb(0.07, 0.07, 0.07), "F2");
+      const integrationList = document.getElementById("pdfIntegrations").textContent === "None"
+        ? [["Integration 1", "None"], ["Integration 2", "-"], ["Integration 3", "-"], ["Weeks", document.getElementById("pdfMetricIntegrationWeeks").textContent]]
+        : document.getElementById("pdfIntegrations").textContent.split(", ").slice(0, 3).map((item, index) => [`Integration ${index + 1}`, item]).concat([["Weeks", document.getElementById("pdfMetricIntegrationWeeks").textContent]]);
+      drawLabelValueRows(330, 496, integrationList, 18, 18);
 
-      drawRect(rightX, 224, colW, 146, rgb(0.99, 0.99, 0.98));
-      drawText("Additional Features", rightX + 16, 348, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawLabelValueRows(rightX + 16, 322, [
-        ["Included Features", document.getElementById("pdfFeatures").textContent]
-      ], 24, 18);
+      drawText("Additional Features", 84, 256, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawLabelValueRows(84, 230, [
+        ["Time Tracking", selectedValues("features").includes("timeTracking") ? "Yes" : "No"],
+        ["Resource Management", selectedValues("features").includes("resourceManagement") ? "Yes" : "No"]
+      ], 18, 22);
 
-      drawRect(64, 56, 484, 148, rgb(0.99, 0.99, 0.98));
-      drawText("Estimate Summary", 80, 180, 16, rgb(0.07, 0.07, 0.07), "F2");
-
-      const cards = [
-        ["Building Tasks", document.getElementById("pdfMetricBuildingTasks").textContent],
-        ["Template Build", document.getElementById("pdfMetricTemplateWeeks").textContent],
-        ["Integrations", document.getElementById("pdfMetricIntegrationWeeks").textContent],
-        ["Projected Go-Live", document.getElementById("pdfMetricGoLive").textContent]
-      ];
-
-      const cardY = 84;
-      const cardW = 108;
-      const cardH = 76;
-      const cardGap = 10;
-      cards.forEach((card, index) => {
-        const x = 80 + (index * (cardW + cardGap));
-        drawRect(x, cardY, cardW, cardH, rgb(0.97, 0.96, 0.94));
-        drawText(card[0], x + 10, cardY + 56, 8, rgb(0.42, 0.39, 0.36), "F2");
-        const valueLines = wrapText(card[1], 14);
-        let valueY = cardY + 30;
-        valueLines.forEach((line) => {
-          drawText(line, x + 10, valueY, 14, rgb(0.07, 0.07, 0.07), "F2");
-          valueY -= 16;
-        });
-      });
+      drawText("Projected Go-Live Date", 330, 256, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawText(document.getElementById("pdfMetricGoLive").textContent, 330, 226, 18, rgb(0.07, 0.07, 0.07), "F2");
 
       if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
         drawRect(64, 28, pageWidth - 128, 32, rgb(0.95, 0.89, 0.84));
@@ -1145,7 +1116,7 @@
         drawText("Undocumented processes can extend timelines on average of two weeks.", 190, 40, 10, rgb(0.32, 0.20, 0.11));
       }
 
-      drawText(`Prepared ${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`, 64, 14, 9, rgb(0.55, 0.52, 0.49));
+      drawText("This estimate is for planning and alignment and is based on what is currently known, including process documentation and integrations required for go-live.", 64, 14, 8, rgb(0.55, 0.52, 0.49));
 
       const stream = content.join("\n");
       const objects = [
