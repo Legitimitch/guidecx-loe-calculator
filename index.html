@@ -1176,6 +1176,14 @@
       return trimmed || fallback;
     }
 
+    function safeFilenameSegment(value) {
+      const normalized = String(value ?? "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return normalized || "guidecx";
+    }
+
     function toggleConditionalFields() {
       integrationOtherWrap.hidden = !selectedValues("integrations").includes("other");
       featureOtherWrap.hidden = !selectedValues("features").includes("other");
@@ -1303,20 +1311,333 @@
       document.getElementById("pdfAdditionalFeatures").textContent = featuresSelected;
     }
 
-    const pdfPrintEl = document.getElementById("pdf-print");
+    function loadImage(src) {
+      return new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = src;
+      });
+    }
 
-    window.addEventListener("afterprint", () => {
+    function wrapCanvasText(ctx, text, maxWidth) {
+      const content = String(text ?? "").trim();
+      if (!content) return [""];
+      const words = content.split(/\s+/);
+      const lines = [];
+      let current = words.shift() || "";
+
+      words.forEach((word) => {
+        const candidate = `${current} ${word}`;
+        if (ctx.measureText(candidate).width <= maxWidth) {
+          current = candidate;
+        } else {
+          lines.push(current);
+          current = word;
+        }
+      });
+
+      if (current) {
+        lines.push(current);
+      }
+
+      return lines;
+    }
+
+    function dataUrlToBytes(dataUrl) {
+      const base64 = dataUrl.split(",")[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return bytes;
+    }
+
+    function buildPdfFromJpeg(jpegBytes, imageWidth, imageHeight) {
+      const encoder = new TextEncoder();
+      const parts = [];
+      const offsets = [0];
+      let totalLength = 0;
+
+      function append(part) {
+        parts.push(part);
+        totalLength += part.length;
+      }
+
+      function appendText(text) {
+        append(encoder.encode(text));
+      }
+
+      appendText("%PDF-1.3\n");
+
+      offsets[1] = totalLength;
+      appendText("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+      offsets[2] = totalLength;
+      appendText("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+
+      offsets[3] = totalLength;
+      appendText("3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /ProcSet [/PDF /ImageC] /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n");
+
+      offsets[4] = totalLength;
+      appendText(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imageWidth} /Height ${imageHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
+      append(jpegBytes);
+      appendText("\nendstream\nendobj\n");
+
+      const contentStream = "q\n612 0 0 792 0 0 cm\n/Im0 Do\nQ\n";
+      offsets[5] = totalLength;
+      appendText(`5 0 obj\n<< /Length ${contentStream.length} >>\nstream\n${contentStream}endstream\nendobj\n`);
+
+      const xrefStart = totalLength;
+      appendText("xref\n0 6\n");
+      appendText("0000000000 65535 f \n");
+      for (let index = 1; index <= 5; index += 1) {
+        appendText(`${String(offsets[index]).padStart(10, "0")} 00000 n \n`);
+      }
+      appendText(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+
+      return new Blob(parts, { type: "application/pdf" });
+    }
+
+    async function buildEstimatePdfBlob() {
+      const pdfPrintEl = document.getElementById("pdf-print");
+      const pageWidth = 1224;
+      const pageHeight = 1584;
+      const padding = 60;
+      const gap = 18;
+      const canvas = document.createElement("canvas");
+      canvas.width = pageWidth;
+      canvas.height = pageHeight;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, pageWidth, pageHeight);
+      ctx.textBaseline = "top";
+
+      const logo = await loadImage("assets/guidecx-full-white.png");
+      let y = padding;
+      const contentWidth = pageWidth - (padding * 2);
+
+      ctx.fillStyle = "#1A1A1A";
+      ctx.fillRect(padding, y, contentWidth, 132);
+      if (logo) {
+        const logoWidth = 190;
+        const logoHeight = logo.height * (logoWidth / logo.width);
+        ctx.drawImage(logo, padding + 24, y + 32, logoWidth, logoHeight);
+      }
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.textAlign = "right";
+      ctx.font = "800 36px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillText("Implementation LOE Estimate", padding + contentWidth - 24, y + 28);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+      ctx.font = "500 20px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillText(document.getElementById("pdfHeaderMeta").textContent, padding + contentWidth - 24, y + 78);
+      ctx.textAlign = "left";
+
+      y += 132 + 14;
+
+      ctx.fillStyle = "#F7F7F7";
+      ctx.fillRect(padding, y, contentWidth, 52);
+      ctx.fillStyle = "#888888";
+      ctx.font = "italic 18px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillText(document.querySelector(".pdf-disclaimer").textContent, padding + 14, y + 14);
+
+      y += 52 + gap;
+
+      const cardGap = 18;
+      const cardWidth = (contentWidth - cardGap) / 2;
+      const cardHeight = 152;
+
+      function drawCard(x, top, options) {
+        ctx.fillStyle = "#F5F5F5";
+        ctx.fillRect(x, top, cardWidth, cardHeight);
+        ctx.fillStyle = options.borderColor;
+        ctx.fillRect(x, top, 8, cardHeight);
+
+        ctx.fillStyle = "#999999";
+        ctx.font = "800 16px Avenir Next, Segoe UI, sans-serif";
+        ctx.fillText(options.title.toUpperCase(), x + 24, top + 18);
+
+        ctx.fillStyle = "#1A1A1A";
+        ctx.font = options.isDate ? "800 32px Avenir Next, Segoe UI, sans-serif" : "800 42px Avenir Next, Segoe UI, sans-serif";
+        const valueLines = wrapCanvasText(ctx, options.value, cardWidth - 48);
+        valueLines.forEach((line, index) => {
+          ctx.fillText(line, x + 24, top + 48 + (index * (options.isDate ? 34 : 40)));
+        });
+
+        ctx.fillStyle = "#777777";
+        ctx.font = "500 18px Avenir Next, Segoe UI, sans-serif";
+        const subLines = wrapCanvasText(ctx, options.subLabel, cardWidth - 48);
+        subLines.slice(0, 2).forEach((line, index) => {
+          ctx.fillText(line, x + 24, top + 108 + (index * 22));
+        });
+      }
+
+      drawCard(padding, y, {
+        title: "Template Build",
+        value: document.getElementById("pdfTemplateHours").textContent,
+        subLabel: document.getElementById("pdfTemplateSub").textContent,
+        borderColor: "#555555",
+        isDate: false
+      });
+
+      drawCard(padding + cardWidth + cardGap, y, {
+        title: "Integrations",
+        value: document.getElementById("pdfIntegrationHours").textContent,
+        subLabel: "Based on selected integrations",
+        borderColor: "#555555",
+        isDate: false
+      });
+
+      y += cardHeight + cardGap;
+
+      drawCard(padding, y, {
+        title: "Additional Features",
+        value: document.getElementById("pdfFeatureHours").textContent,
+        subLabel: "2 hrs setup + training per feature",
+        borderColor: "#555555",
+        isDate: false
+      });
+
+      drawCard(padding + cardWidth + cardGap, y, {
+        title: "Projected Go-Live",
+        value: document.getElementById("pdfGoLiveDate").textContent,
+        subLabel: document.getElementById("pdfGoLiveSub").textContent,
+        borderColor: "#1A1A1A",
+        isDate: true
+      });
+
+      y += cardHeight + gap;
+
+      const tableX = padding;
+      const tableWidth = contentWidth;
+      const leftColWidth = tableWidth * 0.42;
+      const rightColWidth = tableWidth - leftColWidth;
+      const rowHeight = 42;
+      const headerHeight = 42;
+      const tableRows = [
+        ["Company Name", document.getElementById("pdfCompanyName").textContent],
+        ["Prepared By", document.getElementById("pdfPreparedBy").textContent],
+        ["Number of Tasks", document.getElementById("pdfTaskCount").textContent],
+        ["Documented Process", document.getElementById("pdfDocumentedProcess").textContent],
+        ["Weekly Hours Commit (Templates)", document.getElementById("pdfTemplateWeeklyHours").textContent],
+        ["Integrations Selected", document.getElementById("pdfIntegrationsSelected").textContent],
+        ["Weekly Hours Commit (Integrations)", document.getElementById("pdfIntegrationWeeklyHours").textContent],
+        ["Additional Features", document.getElementById("pdfAdditionalFeatures").textContent]
+      ];
+
+      ctx.fillStyle = "#1A1A1A";
+      ctx.fillRect(tableX, y, tableWidth, headerHeight);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "800 18px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillText("Estimate Inputs", tableX + 14, y + 12);
+
+      tableRows.forEach((row, index) => {
+        const rowY = y + headerHeight + (index * rowHeight);
+        ctx.fillStyle = index % 2 === 0 ? "#FFFFFF" : "#F7F7F7";
+        ctx.fillRect(tableX, rowY, tableWidth, rowHeight);
+        ctx.fillStyle = "#F0F0F0";
+        ctx.fillRect(tableX, rowY + rowHeight - 1, tableWidth, 1);
+
+        ctx.fillStyle = "#666666";
+        ctx.font = "500 16px Avenir Next, Segoe UI, sans-serif";
+        ctx.fillText(row[0], tableX + 14, rowY + 12);
+
+        ctx.fillStyle = "#1A1A1A";
+        ctx.font = "600 16px Avenir Next, Segoe UI, sans-serif";
+        const valueLines = wrapCanvasText(ctx, row[1], rightColWidth - 28);
+        valueLines.slice(0, 2).forEach((line, lineIndex) => {
+          ctx.fillText(line, tableX + leftColWidth + 14, rowY + 12 + (lineIndex * 18));
+        });
+      });
+
+      y += headerHeight + (tableRows.length * rowHeight) + gap;
+
+      ctx.fillStyle = "#999999";
+      ctx.font = "800 16px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillText(document.querySelector(".pdf-section-label").textContent.toUpperCase(), padding, y);
+
+      y += 28;
+
+      const calcLines = [...document.querySelectorAll(".pdf-calc p")];
+      calcLines.forEach((line) => {
+        const text = line.textContent;
+        const colonIndex = text.indexOf(":");
+        const label = colonIndex >= 0 ? `${text.slice(0, colonIndex + 1)} ` : "";
+        const rest = colonIndex >= 0 ? text.slice(colonIndex + 1).trim() : text;
+        ctx.fillStyle = "#1A1A1A";
+        ctx.font = "700 15px Avenir Next, Segoe UI, sans-serif";
+        ctx.fillText(label, padding, y);
+        const labelWidth = ctx.measureText(label).width;
+        ctx.fillStyle = "#666666";
+        ctx.font = "500 15px Avenir Next, Segoe UI, sans-serif";
+        const wrapped = wrapCanvasText(ctx, rest, contentWidth - labelWidth);
+        wrapped.forEach((segment, index) => {
+          const x = index === 0 ? padding + labelWidth : padding;
+          ctx.fillText(segment, x, y + (index * 20));
+        });
+        y += Math.max(24, wrapped.length * 20) + 4;
+      });
+
+      y += 8;
+
+      ctx.fillStyle = "#F0F0F0";
+      ctx.fillRect(padding, y, contentWidth, 96);
+      ctx.fillStyle = "#1A1A1A";
+      ctx.fillRect(padding, y, 8, 96);
+      ctx.font = "800 16px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillText(document.querySelector(".pdf-callout h2").textContent, padding + 18, y + 14);
+      ctx.fillStyle = "#555555";
+      ctx.font = "500 15px Avenir Next, Segoe UI, sans-serif";
+      const calloutLines = wrapCanvasText(ctx, document.querySelector(".pdf-callout p").textContent, contentWidth - 40);
+      calloutLines.slice(0, 4).forEach((line, index) => {
+        ctx.fillText(line, padding + 18, y + 40 + (index * 18));
+      });
+
+      y += 96 + 14;
+
+      ctx.fillStyle = "#AAAAAA";
+      ctx.font = "italic 13px Avenir Next, Segoe UI, sans-serif";
+      const footnoteLines = wrapCanvasText(ctx, document.querySelector(".pdf-footnote").textContent, contentWidth);
+      footnoteLines.forEach((line, index) => {
+        ctx.fillText(line, padding, y + (index * 16));
+      });
+
+      const footerY = pageHeight - padding - 28;
+      ctx.fillStyle = "#1A1A1A";
+      ctx.fillRect(padding, footerY - 10, contentWidth, 2);
+      ctx.font = "800 14px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillStyle = "#1A1A1A";
+      ctx.fillText(document.querySelector(".pdf-footer div:first-child").textContent, padding, footerY + 8);
+      ctx.font = "500 14px Avenir Next, Segoe UI, sans-serif";
+      ctx.fillStyle = "#AAAAAA";
+      ctx.textAlign = "center";
+      ctx.fillText(document.querySelector(".pdf-footer div:nth-child(2)").textContent, pageWidth / 2, footerY + 8);
+      ctx.textAlign = "right";
+      ctx.fillText(document.querySelector(".pdf-footer div:last-child").textContent, padding + contentWidth, footerY + 8);
+      ctx.textAlign = "left";
+
+      const jpegBytes = dataUrlToBytes(canvas.toDataURL("image/jpeg", 0.92));
       pdfPrintEl.style.display = "none";
       pdfPrintEl.setAttribute("aria-hidden", "true");
-    });
+      return buildPdfFromJpeg(jpegBytes, canvas.width, canvas.height);
+    }
 
-    document.getElementById("downloadSummaryButton").addEventListener("click", () => {
+    document.getElementById("downloadSummaryButton").addEventListener("click", async () => {
       populatePrintSummary();
-      pdfPrintEl.style.display = "block";
-      pdfPrintEl.setAttribute("aria-hidden", "false");
-      window.requestAnimationFrame(() => {
-        window.print();
-      });
+      const companyName = displayValue(document.getElementById("companyName").value, "guidecx");
+      const fileName = `${safeFilenameSegment(companyName)}-estimate-summary.pdf`;
+      const blob = await buildEstimatePdfBlob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
     });
 
     document.addEventListener("input", calculate);
