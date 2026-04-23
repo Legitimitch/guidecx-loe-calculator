@@ -536,6 +536,251 @@
       font-size: 0.9rem;
     }
 
+    #pdf-print {
+      color: #1A1A1A;
+      background: white;
+    }
+
+    #pdf-print .pdf-page {
+      width: 8.5in;
+      min-height: 11in;
+      padding: 0.42in;
+      background: white;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      display: grid;
+      gap: 12px;
+    }
+
+    #pdf-print .pdf-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 18px 22px;
+      background: #1A1A1A;
+      color: white;
+    }
+
+    #pdf-print .pdf-header img {
+      width: 120px;
+      height: auto;
+    }
+
+    #pdf-print .pdf-header-copy {
+      display: grid;
+      gap: 6px;
+      text-align: right;
+    }
+
+    #pdf-print .pdf-header-copy h1 {
+      margin: 0;
+      font-size: 18pt;
+      font-weight: 800;
+      color: white;
+    }
+
+    #pdf-print .pdf-header-copy p {
+      margin: 0;
+      font-size: 10pt;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    #pdf-print .pdf-disclaimer {
+      margin: 0;
+      padding: 10px 12px;
+      background: #F7F7F7;
+      font-size: 9pt;
+      font-style: italic;
+      color: #888888;
+      line-height: 1.45;
+    }
+
+    #pdf-print .pdf-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    #pdf-print .pdf-card {
+      background: #F5F5F5;
+      border-left: 4px solid #555555;
+      border-radius: 0 14px 14px 0;
+      padding: 14px 16px;
+      display: grid;
+      gap: 8px;
+      min-height: 108px;
+    }
+
+    #pdf-print .pdf-card.pdf-card-dark {
+      border-left-color: #1A1A1A;
+    }
+
+    #pdf-print .pdf-card-title {
+      font-size: 8pt;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: #999999;
+      text-transform: uppercase;
+    }
+
+    #pdf-print .pdf-card-value {
+      font-size: 24pt;
+      font-weight: 800;
+      line-height: 1;
+      color: #1A1A1A;
+    }
+
+    #pdf-print .pdf-card-value.pdf-card-date {
+      font-size: 20pt;
+    }
+
+    #pdf-print .pdf-card-sub {
+      font-size: 9pt;
+      color: #777777;
+      line-height: 1.4;
+    }
+
+    #pdf-print .pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+    }
+
+    #pdf-print .pdf-table thead th {
+      background: #1A1A1A;
+      color: white;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 9pt;
+      font-weight: 800;
+    }
+
+    #pdf-print .pdf-table tbody tr:nth-child(odd) {
+      background: white;
+    }
+
+    #pdf-print .pdf-table tbody tr:nth-child(even) {
+      background: #F7F7F7;
+    }
+
+    #pdf-print .pdf-table td {
+      padding: 8px 12px;
+      border-bottom: 0.5px solid #F0F0F0;
+      vertical-align: top;
+    }
+
+    #pdf-print .pdf-table td:first-child {
+      width: 42%;
+      color: #666666;
+    }
+
+    #pdf-print .pdf-table td:last-child {
+      color: #1A1A1A;
+      font-weight: 600;
+    }
+
+    #pdf-print .pdf-section-label {
+      margin: 0 0 6px;
+      font-size: 8pt;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #999999;
+    }
+
+    #pdf-print .pdf-calc {
+      display: grid;
+      gap: 6px;
+    }
+
+    #pdf-print .pdf-calc p {
+      margin: 0;
+      font-size: 8.5pt;
+      color: #666666;
+      line-height: 1.45;
+    }
+
+    #pdf-print .pdf-calc strong {
+      color: #1A1A1A;
+    }
+
+    #pdf-print .pdf-callout {
+      padding: 12px 14px;
+      background: #F0F0F0;
+      border-left: 4px solid #1A1A1A;
+      border-radius: 0 14px 14px 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    #pdf-print .pdf-callout h2 {
+      margin: 0;
+      font-size: 9pt;
+      font-weight: 800;
+      color: #1A1A1A;
+    }
+
+    #pdf-print .pdf-callout p {
+      margin: 0;
+      font-size: 8.5pt;
+      color: #555555;
+      line-height: 1.45;
+    }
+
+    #pdf-print .pdf-footnote {
+      margin: 0;
+      font-size: 7.5pt;
+      font-style: italic;
+      color: #AAAAAA;
+      line-height: 1.45;
+    }
+
+    #pdf-print .pdf-footer {
+      border-top: 2px solid #1A1A1A;
+      padding-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: center;
+      font-size: 8pt;
+    }
+
+    #pdf-print .pdf-footer div:first-child {
+      color: #1A1A1A;
+      font-weight: 800;
+      text-align: left;
+    }
+
+    #pdf-print .pdf-footer div:nth-child(2) {
+      color: #AAAAAA;
+      text-align: center;
+    }
+
+    #pdf-print .pdf-footer div:last-child {
+      color: #AAAAAA;
+      text-align: right;
+    }
+
+    @media print {
+      @page {
+        size: letter;
+        margin: 0;
+      }
+
+      body {
+        margin: 0 !important;
+        background: white !important;
+      }
+
+      body > * {
+        display: none !important;
+      }
+
+      #pdf-print {
+        display: block !important;
+      }
+    }
+
     @media (max-width: 980px) {
       .layout {
         grid-template-columns: 1fr;
@@ -753,9 +998,88 @@
               </div>
               <strong id="goLiveDateDisplay">TBD</strong>
             </div>
+            <button class="button primary" id="downloadSummaryButton" type="button">Download Estimate Summary</button>
           </div>
         </section>
       </aside>
+    </div>
+  </div>
+
+  <div id="pdf-print" style="display:none;" aria-hidden="true">
+    <div class="pdf-page">
+      <section class="pdf-header">
+        <img src="assets/guidecx-full-white.png" alt="GUIDEcx logo">
+        <div class="pdf-header-copy">
+          <h1>Implementation LOE Estimate</h1>
+          <p id="pdfHeaderMeta">Prepared for: Acme Corp &middot; April 22, 2026</p>
+        </div>
+      </section>
+
+      <p class="pdf-disclaimer">This estimate reflects projected level of effort based on the inputs provided. Integrations marked with * require a formal scoping call.</p>
+
+      <section class="pdf-summary-grid">
+        <article class="pdf-card">
+          <div class="pdf-card-title">Template Build</div>
+          <div class="pdf-card-value" id="pdfTemplateHours">0.0 hrs</div>
+          <div class="pdf-card-sub" id="pdfTemplateSub">~0.0 days at 0 hrs/day</div>
+        </article>
+        <article class="pdf-card">
+          <div class="pdf-card-title">Integrations</div>
+          <div class="pdf-card-value" id="pdfIntegrationHours">0.0 hrs*</div>
+          <div class="pdf-card-sub">Based on selected integrations</div>
+        </article>
+        <article class="pdf-card">
+          <div class="pdf-card-title">Additional Features</div>
+          <div class="pdf-card-value" id="pdfFeatureHours">0.0 hrs</div>
+          <div class="pdf-card-sub">2 hrs setup + training per feature</div>
+        </article>
+        <article class="pdf-card pdf-card-dark">
+          <div class="pdf-card-title">Projected Go-Live</div>
+          <div class="pdf-card-value pdf-card-date" id="pdfGoLiveDate">April 22, 2026</div>
+          <div class="pdf-card-sub" id="pdfGoLiveSub">Template 0 hrs/week · Integrations 0 hrs/week</div>
+        </article>
+      </section>
+
+      <section>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>Estimate Inputs</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Company Name</td><td id="pdfCompanyName">Not provided</td></tr>
+            <tr><td>Prepared By</td><td id="pdfPreparedBy">Not provided</td></tr>
+            <tr><td>Number of Tasks</td><td id="pdfTaskCount">0</td></tr>
+            <tr><td>Documented Process</td><td id="pdfDocumentedProcess">Not specified</td></tr>
+            <tr><td>Weekly Hours Commit (Templates)</td><td id="pdfTemplateWeeklyHours">0</td></tr>
+            <tr><td>Integrations Selected</td><td id="pdfIntegrationsSelected">None</td></tr>
+            <tr><td>Weekly Hours Commit (Integrations)</td><td id="pdfIntegrationWeeklyHours">0</td></tr>
+            <tr><td>Additional Features</td><td id="pdfAdditionalFeatures">None</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="pdf-calc">
+        <div class="pdf-section-label">How We Calculate This</div>
+        <p><strong>Template Build:</strong> Tasks × ~7 min avg per task ÷ 60 = hours. Timeline = hours ÷ weekly hours commit.</p>
+        <p><strong>Integrations:</strong> Hours based on integration type and complexity. Timeline = integration hours ÷ weekly commit. *Formal scoping call required.</p>
+        <p><strong>Additional Features:</strong> 2 hrs setup + training per selected feature, combined with template build total.</p>
+      </section>
+
+      <section class="pdf-callout">
+        <h2>&#9889; Want to reduce template build time significantly?</h2>
+        <p>If you share your process assets (SOPs, flowcharts, spreadsheets) we'll build your foundation for you. Our team uses AI to map your existing workflows into GUIDEcx-ready templates &mdash; your template sessions start from a working draft, not a blank slate.</p>
+      </section>
+
+      <p class="pdf-footnote">* Integration hours require a formal scoping call to determine complexity and to define what must be live at go-live versus what can be delivered post go-live.</p>
+
+      <footer class="pdf-footer">
+        <div>guidecx.com</div>
+        <div>This estimate is not a contractual commitment.</div>
+        <div>Page 1 of 1</div>
+      </footer>
     </div>
   </div>
 
@@ -832,6 +1156,24 @@
         month: "short",
         day: "numeric"
       });
+    }
+
+    function formatLongDate(date) {
+      return date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function extractNumber(text) {
+      const match = String(text).match(/-?\d+(\.\d+)?/);
+      return match ? parseFloat(match[0]) : 0;
+    }
+
+    function displayValue(value, fallback = "Not provided") {
+      const trimmed = String(value ?? "").trim();
+      return trimmed || fallback;
     }
 
     function toggleConditionalFields() {
@@ -923,6 +1265,59 @@
       document.getElementById("selectedIntegrationsCard").textContent = estimate.selectedIntegrationLabels;
       document.getElementById("selectedFeaturesCard").textContent = estimate.selectedFeatureLabels;
     }
+
+    function populatePrintSummary() {
+      const companyName = displayValue(document.getElementById("companyName").value);
+      const preparedBy = displayValue(document.getElementById("userName").value);
+      const totalTasks = displayValue(document.getElementById("totalTasks").value, "0");
+      const templateWeeklyHours = extractNumber(document.getElementById("templateWeeklyHours").value);
+      const integrationWeeklyHours = extractNumber(document.getElementById("integrationWeeklyHours").value);
+      const documentedValue = document.getElementById("processDocumented").value;
+      const documentedText = documentedValue === "yes" ? "Yes" : documentedValue === "no" ? "No" : "Not specified";
+      const integrationsSelected = displayValue(document.getElementById("selectedIntegrationsCard").textContent, "None");
+      const featuresSelected = displayValue(document.getElementById("selectedFeaturesCard").textContent, "None");
+      const templateHoursText = displayValue(document.getElementById("buildingTasksHours").textContent, "0.0 hrs");
+      const integrationHoursText = displayValue(document.getElementById("integrationHours").textContent, "0.0 hrs");
+      const featureHoursText = displayValue(document.getElementById("featureHours").textContent, "0.0 hrs");
+      const templateWeeks = extractNumber(document.getElementById("templateWeeks").textContent);
+      const integrationWeeks = extractNumber(document.getElementById("buildingIntegrationsValue").textContent);
+      const templateHours = extractNumber(templateHoursText);
+      const today = new Date();
+      const projectedDate = new Date(Date.now() + Math.max(templateWeeks, integrationWeeks) * 7 * 24 * 60 * 60 * 1000);
+      const templateDays = templateWeeklyHours > 0 ? templateHours / templateWeeklyHours : 0;
+
+      document.getElementById("pdfHeaderMeta").textContent = `Prepared for: ${companyName} \u00B7 ${formatLongDate(today)}`;
+      document.getElementById("pdfTemplateHours").textContent = templateHoursText;
+      document.getElementById("pdfTemplateSub").textContent = `~${templateDays.toFixed(1)} days at ${templateWeeklyHours} hrs/day`;
+      document.getElementById("pdfIntegrationHours").textContent = `${integrationHoursText}*`;
+      document.getElementById("pdfFeatureHours").textContent = featureHoursText;
+      document.getElementById("pdfGoLiveDate").textContent = formatLongDate(projectedDate);
+      document.getElementById("pdfGoLiveSub").textContent = `Template ${templateWeeklyHours} hrs/week \u00B7 Integrations ${integrationWeeklyHours} hrs/week`;
+      document.getElementById("pdfCompanyName").textContent = companyName;
+      document.getElementById("pdfPreparedBy").textContent = preparedBy;
+      document.getElementById("pdfTaskCount").textContent = totalTasks;
+      document.getElementById("pdfDocumentedProcess").textContent = documentedText;
+      document.getElementById("pdfTemplateWeeklyHours").textContent = templateWeeklyHours ? `${templateWeeklyHours} hrs/week` : "0 hrs/week";
+      document.getElementById("pdfIntegrationsSelected").textContent = integrationsSelected;
+      document.getElementById("pdfIntegrationWeeklyHours").textContent = integrationWeeklyHours ? `${integrationWeeklyHours} hrs/week` : "0 hrs/week";
+      document.getElementById("pdfAdditionalFeatures").textContent = featuresSelected;
+    }
+
+    const pdfPrintEl = document.getElementById("pdf-print");
+
+    window.addEventListener("afterprint", () => {
+      pdfPrintEl.style.display = "none";
+      pdfPrintEl.setAttribute("aria-hidden", "true");
+    });
+
+    document.getElementById("downloadSummaryButton").addEventListener("click", () => {
+      populatePrintSummary();
+      pdfPrintEl.style.display = "block";
+      pdfPrintEl.setAttribute("aria-hidden", "false");
+      window.requestAnimationFrame(() => {
+        window.print();
+      });
+    });
 
     document.addEventListener("input", calculate);
     document.addEventListener("change", calculate);
