@@ -157,13 +157,6 @@
       font-size: 1rem;
     }
 
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-
     .button {
       appearance: none;
       border: 0;
@@ -188,6 +181,19 @@
       background: white;
       color: var(--ink);
       border: 1px solid var(--line);
+    }
+
+    .button.icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .button.icon-button svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
     }
 
     .status {
@@ -352,6 +358,10 @@
     .summary-grid {
       display: grid;
       gap: 12px;
+    }
+
+    .summary-actions {
+      margin-top: 18px;
     }
 
     .metric {
@@ -537,13 +547,6 @@
           </p>
         </div>
 
-        <div class="hero-actions">
-          <button class="button primary" id="copyLinkButton" type="button">Copy Share Link</button>
-          <button class="button secondary" id="saveButton" type="button">Save Progress</button>
-          <button class="button secondary" id="resetButton" type="button">Reset Inputs</button>
-        </div>
-
-        <div class="status" id="statusMessage" aria-live="polite"></div>
       </div>
     </section>
 
@@ -694,6 +697,17 @@
               <strong id="goLiveDateDisplay">TBD</strong>
             </div>
           </div>
+
+          <div class="summary-actions">
+            <button class="button primary icon-button" id="downloadSummaryButton" type="button" aria-label="Download estimate summary PDF">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 4v10m0 0 4-4m-4 4-4-4M5 18h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <span>Download Estimate Summary</span>
+            </button>
+          </div>
+
+          <div class="status" id="statusMessage" aria-live="polite"></div>
         </section>
       </aside>
     </div>
@@ -716,21 +730,11 @@
       ["other", "Other"]
     ];
 
-    const fieldIds = [
-      "companyName",
-      "userName",
-      "totalTasks",
-      "templateWeeklyHours",
-      "teams",
-      "processDocumented",
-      "integrationOther",
-      "featureOther"
-    ];
-
-    const storageKey = "guidecx-loe-calculator";
     const statusEl = document.getElementById("statusMessage");
     const integrationOtherWrap = document.getElementById("integrationOtherWrap");
     const featureOtherWrap = document.getElementById("featureOtherWrap");
+    const measureCanvas = document.createElement("canvas");
+    const measureContext = measureCanvas.getContext("2d");
 
     const integrationValues = {
       salesforce: 2,
@@ -787,49 +791,6 @@
       });
     }
 
-    function getState() {
-      const state = {};
-      fieldIds.forEach((id) => {
-        state[id] = document.getElementById(id).value;
-      });
-      state.integrations = selectedValues("integrations");
-      state.features = selectedValues("features");
-      return state;
-    }
-
-    function applyState(state) {
-      if (!state) return;
-
-      fieldIds.forEach((id) => {
-        if (state[id] !== undefined) {
-          document.getElementById(id).value = state[id];
-        }
-      });
-
-      document.querySelectorAll('input[name="integrations"]').forEach((input) => {
-        input.checked = (state.integrations || []).includes(input.value);
-      });
-
-      document.querySelectorAll('input[name="features"]').forEach((input) => {
-        input.checked = (state.features || []).includes(input.value);
-      });
-
-      toggleConditionalFields();
-      calculate();
-    }
-
-    function encodeState(state) {
-      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-    }
-
-    function decodeState(value) {
-      try {
-        return JSON.parse(decodeURIComponent(escape(atob(value))));
-      } catch {
-        return null;
-      }
-    }
-
     function setStatus(message) {
       statusEl.textContent = message;
       window.clearTimeout(setStatus.timer);
@@ -860,7 +821,7 @@
       return values.map((value) => labelForValue(name, value)).join(", ");
     }
 
-    function calculate() {
+    function computeEstimate() {
       toggleConditionalFields();
 
       const totalTasks = num("totalTasks");
@@ -890,55 +851,280 @@
       const selectedIntegrationLabels = integrations.length ? integrations.map((value) => labelForValue("integrations", value)).join(", ") : "None";
       const selectedFeatureLabels = joinedLabels("features");
 
-      document.getElementById("buildingTasksHours").textContent = formatHours(buildingTasksHours);
-      document.getElementById("templateWeeks").textContent = formatWeeks(templateBuildWeeks);
-      document.getElementById("buildingIntegrationsValue").textContent = formatWeeks(integrationWeeks);
-      document.getElementById("integrationHours").textContent = formatHours(integrationHours);
-      document.getElementById("goLiveDateDisplay").textContent = formatDate(projectedGoLive);
-      document.getElementById("featureHours").textContent = formatHours(additionalFeatureHours);
-      document.getElementById("featureWeeksCard").textContent = formatWeeks(featureWeeks);
-      document.getElementById("selectedIntegrationsCard").textContent = selectedIntegrationLabels;
-      document.getElementById("selectedFeaturesCard").textContent = selectedFeatureLabels;
+      return {
+        companyName: document.getElementById("companyName").value.trim(),
+        userName: document.getElementById("userName").value.trim(),
+        buildingTasksHours,
+        templateBuildWeeks,
+        integrationHours,
+        integrationWeeks,
+        additionalFeatureHours,
+        featureWeeks,
+        projectedGoLive,
+        selectedIntegrationLabels,
+        selectedFeatureLabels,
+        templateHoursDisplay: formatHours(buildingTasksHours),
+        templateWeeksDisplay: formatWeeks(templateBuildWeeks),
+        integrationHoursDisplay: formatHours(integrationHours),
+        integrationWeeksDisplay: formatWeeks(integrationWeeks),
+        featureHoursDisplay: formatHours(additionalFeatureHours),
+        featureWeeksDisplay: formatWeeks(featureWeeks),
+        goLiveDateDisplay: formatDate(projectedGoLive)
+      };
+    }
+
+    function calculate() {
+      const estimate = computeEstimate();
+
+      document.getElementById("buildingTasksHours").textContent = estimate.templateHoursDisplay;
+      document.getElementById("templateWeeks").textContent = estimate.templateWeeksDisplay;
+      document.getElementById("buildingIntegrationsValue").textContent = estimate.integrationWeeksDisplay;
+      document.getElementById("integrationHours").textContent = estimate.integrationHoursDisplay;
+      document.getElementById("goLiveDateDisplay").textContent = estimate.goLiveDateDisplay;
+      document.getElementById("featureHours").textContent = estimate.featureHoursDisplay;
+      document.getElementById("featureWeeksCard").textContent = estimate.featureWeeksDisplay;
+      document.getElementById("selectedIntegrationsCard").textContent = estimate.selectedIntegrationLabels;
+      document.getElementById("selectedFeaturesCard").textContent = estimate.selectedFeatureLabels;
+    }
+
+    function pdfSafeText(value) {
+      return String(value ?? "")
+        .normalize("NFKD")
+        .replace(/[^\x20-\x7E]/g, "")
+        .trim();
+    }
+
+    function escapePdfText(value) {
+      return pdfSafeText(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/\(/g, "\\(")
+        .replace(/\)/g, "\\)");
+    }
+
+    function safeFilenameSegment(value) {
+      const normalized = pdfSafeText(value)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return normalized || "guidecx";
+    }
+
+    function wrapPdfText(text, maxWidth, fontSize, weight = "normal", maxLines = Infinity) {
+      const safeText = pdfSafeText(text) || "None";
+      const pxWidth = maxWidth * (96 / 72);
+      measureContext.font = `${weight === "bold" ? "700" : "500"} ${fontSize * (96 / 72)}px Arial`;
+
+      const words = safeText.split(/\s+/).filter(Boolean);
+      if (!words.length) return ["None"];
+
+      const lines = [];
+      let current = words.shift();
+
+      words.forEach((word) => {
+        const testLine = `${current} ${word}`;
+        if (measureContext.measureText(testLine).width <= pxWidth) {
+          current = testLine;
+          return;
+        }
+        lines.push(current);
+        current = word;
+      });
+
+      if (current) {
+        lines.push(current);
+      }
+
+      if (lines.length > maxLines) {
+        const truncated = lines.slice(0, maxLines);
+        truncated[maxLines - 1] = `${truncated[maxLines - 1].replace(/\.*$/, "")}...`;
+        return truncated;
+      }
+
+      return lines;
+    }
+
+    function buildEstimatePdf(estimate) {
+      const pageWidth = 612;
+      const pageHeight = 792;
+      const margin = 54;
+      const contentWidth = pageWidth - (margin * 2);
+      const commands = [];
+
+      const colors = {
+        ink: [0.07, 0.07, 0.07],
+        muted: [0.39, 0.38, 0.36],
+        accent: [0.07, 0.07, 0.07],
+        accentSoft: [0.92, 0.9, 0.87],
+        card: [0.97, 0.96, 0.94],
+        white: [1, 1, 1],
+        line: [0.84, 0.82, 0.79]
+      };
+
+      function fmt(value) {
+        return Number(value).toFixed(2).replace(/\.00$/, "");
+      }
+
+      function setFill([r, g, b]) {
+        commands.push(`${fmt(r)} ${fmt(g)} ${fmt(b)} rg`);
+      }
+
+      function setStroke([r, g, b]) {
+        commands.push(`${fmt(r)} ${fmt(g)} ${fmt(b)} RG`);
+      }
+
+      function drawRect(x, top, width, height, fillColor, strokeColor = null) {
+        if (fillColor) setFill(fillColor);
+        if (strokeColor) setStroke(strokeColor);
+        const y = pageHeight - top - height;
+        commands.push(`${fmt(x)} ${fmt(y)} ${fmt(width)} ${fmt(height)} re ${strokeColor ? "B" : "f"}`);
+      }
+
+      function drawText(text, x, top, { font = "F1", size = 12, color = colors.ink } = {}) {
+        const y = pageHeight - top - size;
+        commands.push("BT");
+        commands.push(`/${font} ${fmt(size)} Tf`);
+        setFill(color);
+        commands.push(`1 0 0 1 ${fmt(x)} ${fmt(y)} Tm`);
+        commands.push(`(${escapePdfText(text)}) Tj`);
+        commands.push("ET");
+      }
+
+      function drawTextBlock(lines, x, top, { font = "F1", size = 12, color = colors.ink, leading = size + 4 } = {}) {
+        lines.forEach((line, index) => {
+          drawText(line, x, top + (index * leading), { font, size, color });
+        });
+      }
+
+      function drawLabeledValue(label, value, x, top, width) {
+        drawText(label, x, top, { font: "F2", size: 10, color: colors.muted });
+        const wrappedValue = wrapPdfText(value, width, 15, "bold", 2);
+        drawTextBlock(wrappedValue, x, top + 18, { font: "F2", size: 15, color: colors.ink, leading: 18 });
+      }
+
+      function drawSummaryCard(top, title, bodyLines, footerLines = []) {
+        const titleHeight = 20;
+        const bodyHeight = bodyLines.length ? (bodyLines.length * 17) + 10 : 0;
+        const footerHeight = footerLines.length ? (footerLines.length * 19) + 8 : 0;
+        const cardHeight = 26 + titleHeight + bodyHeight + footerHeight + 18;
+
+        drawRect(margin, top, contentWidth, cardHeight, colors.card, colors.line);
+        drawText(title, margin + 18, top + 18, { font: "F2", size: 11, color: colors.muted });
+        if (bodyLines.length) {
+          drawTextBlock(bodyLines, margin + 18, top + 42, { font: "F1", size: 12, color: colors.ink, leading: 17 });
+        }
+        if (footerLines.length) {
+          const footerTop = top + 42 + bodyHeight;
+          commands.push(`${fmt(margin + 18)} ${fmt(pageHeight - footerTop)} m ${fmt(margin + contentWidth - 18)} ${fmt(pageHeight - footerTop)} l S`);
+          footerLines.forEach((line, index) => {
+            const labelX = margin + 18;
+            const valueX = margin + contentWidth - 18 - 130;
+            drawText(line.label, labelX, footerTop + 10 + (index * 19), { font: "F2", size: 10, color: colors.muted });
+            drawText(line.value, valueX, footerTop + 10 + (index * 19), { font: "F2", size: 12, color: colors.ink });
+          });
+        }
+
+        return top + cardHeight + 14;
+      }
+
+      drawRect(margin, margin, contentWidth, 126, colors.accent);
+      drawText("GUIDEcx Estimate Summary", margin + 24, margin + 22, { font: "F2", size: 28, color: colors.white });
+      drawText("Customer-facing implementation estimate overview", margin + 24, margin + 58, { font: "F1", size: 11, color: colors.accentSoft });
+
+      drawLabeledValue("Prepared For", estimate.companyName || "Not specified", margin + 24, margin + 82, 200);
+      drawLabeledValue("Prepared By", estimate.userName || "Not specified", margin + 216, margin + 82, 160);
+      drawLabeledValue("Created", formatDate(new Date()), margin + 396, margin + 82, 92);
+
+      let top = margin + 144;
+
+      top = drawSummaryCard(
+        top,
+        "TEMPLATE BUILD",
+        [],
+        [
+          { label: "Hours", value: estimate.templateHoursDisplay },
+          { label: "Weeks", value: estimate.templateWeeksDisplay }
+        ]
+      );
+
+      top = drawSummaryCard(
+        top,
+        "INTEGRATIONS",
+        wrapPdfText(estimate.selectedIntegrationLabels, contentWidth - 36, 12, "normal", 4),
+        [
+          { label: "Hours", value: estimate.integrationHoursDisplay },
+          { label: "Weeks", value: estimate.integrationWeeksDisplay }
+        ]
+      );
+
+      top = drawSummaryCard(
+        top,
+        "ADDITIONAL FEATURES",
+        wrapPdfText(estimate.selectedFeatureLabels, contentWidth - 36, 12, "normal", 4),
+        [
+          { label: "Hours", value: estimate.featureHoursDisplay },
+          { label: "Weeks", value: estimate.featureWeeksDisplay }
+        ]
+      );
+
+      drawRect(margin, top, contentWidth, 106, colors.card, colors.line);
+      drawText("PROJECTED GO-LIVE", margin + 18, top + 18, { font: "F2", size: 11, color: colors.muted });
+      drawText(estimate.goLiveDateDisplay, margin + 18, top + 42, { font: "F2", size: 28, color: colors.ink });
+      drawText("Based on the current estimate summary inputs.", margin + 18, top + 78, { font: "F1", size: 11, color: colors.muted });
+
+      const content = commands.join("\n");
+      const objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>`,
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        `<< /Length ${content.length} >>\nstream\n${content}\nendstream`
+      ];
+
+      let pdf = "%PDF-1.4\n";
+      const offsets = [0];
+
+      objects.forEach((object, index) => {
+        offsets[index + 1] = pdf.length;
+        pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+      });
+
+      const xrefStart = pdf.length;
+      pdf += `xref\n0 ${objects.length + 1}\n`;
+      pdf += "0000000000 65535 f \n";
+      offsets.slice(1).forEach((offset) => {
+        pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+      });
+      pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+
+      return new Blob([pdf], { type: "application/pdf" });
     }
 
     document.addEventListener("input", calculate);
     document.addEventListener("change", calculate);
 
-    document.getElementById("copyLinkButton").addEventListener("click", async () => {
-      const shareUrl = new URL(window.location.href);
-      shareUrl.hash = encodeState(getState());
+    document.getElementById("downloadSummaryButton").addEventListener("click", () => {
       try {
-        await navigator.clipboard.writeText(shareUrl.toString());
-        setStatus("Share link copied.");
+        const estimate = computeEstimate();
+        const blob = buildEstimatePdf(estimate);
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const companySlug = safeFilenameSegment(estimate.companyName);
+
+        link.href = downloadUrl;
+        link.download = `${companySlug}-estimate-summary.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(downloadUrl);
+        setStatus("Estimate summary PDF downloaded.");
       } catch {
-        setStatus("Clipboard access failed. Copy the full URL from the browser.");
+        setStatus("PDF download could not be created.");
       }
     });
 
-    document.getElementById("saveButton").addEventListener("click", () => {
-      window.localStorage.setItem(storageKey, JSON.stringify(getState()));
-      setStatus("Inputs saved on this device.");
-    });
-
-    document.getElementById("resetButton").addEventListener("click", () => {
-      window.localStorage.removeItem(storageKey);
-      window.location.hash = "";
-      window.location.reload();
-    });
-
-    const hashState = window.location.hash.slice(1) ? decodeState(window.location.hash.slice(1)) : null;
-    const savedState = window.localStorage.getItem(storageKey);
-
-    if (hashState) {
-      applyState(hashState);
-      setStatus("Shared estimate loaded.");
-    } else if (savedState) {
-      applyState(JSON.parse(savedState));
-      setStatus("Saved estimate restored.");
-    } else {
-      toggleConditionalFields();
-      calculate();
-    }
+    toggleConditionalFields();
+    calculate();
   </script>
 </body>
 </html>
