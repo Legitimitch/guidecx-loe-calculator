@@ -380,6 +380,43 @@
       letter-spacing: -0.05em;
     }
 
+    .metric-lines {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .metric-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(214, 209, 202, 0.72);
+    }
+
+    .metric-line:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .metric-line em {
+      color: var(--muted);
+      font-style: normal;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .metric-line strong {
+      margin-top: 0;
+      font-size: 1rem;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      text-align: right;
+    }
+
     .formula {
       margin-top: 16px;
       border: 1px solid var(--line);
@@ -698,16 +735,51 @@
 
           <div class="summary-grid">
             <div class="metric">
-              <span>Building Tasks</span>
-              <strong id="buildingTasksHours">0.0 hrs</strong>
-            </div>
-            <div class="metric">
               <span>Template Build</span>
-              <strong id="templateWeeks">0.0 weeks</strong>
+              <div class="metric-lines">
+                <div class="metric-line">
+                  <em>Hours</em>
+                  <strong id="buildingTasksHours">0.0 hrs</strong>
+                </div>
+                <div class="metric-line">
+                  <em>Weeks</em>
+                  <strong id="templateWeeks">0.0 weeks</strong>
+                </div>
+              </div>
             </div>
             <div class="metric">
-              <span>Building Integrations</span>
-              <strong id="buildingIntegrationsValue">0.0 weeks</strong>
+              <span>Integrations</span>
+              <div class="metric-lines">
+                <div class="metric-line">
+                  <em>Integrations</em>
+                  <strong id="selectedIntegrationsCard">None</strong>
+                </div>
+                <div class="metric-line">
+                  <em>Hours</em>
+                  <strong id="integrationHours">0.0 hrs</strong>
+                </div>
+                <div class="metric-line">
+                  <em>Weeks</em>
+                  <strong id="buildingIntegrationsValue">0.0 weeks</strong>
+                </div>
+              </div>
+            </div>
+            <div class="metric">
+              <span>Additional Features</span>
+              <div class="metric-lines">
+                <div class="metric-line">
+                  <em>Features</em>
+                  <strong id="selectedFeaturesCard">Time Tracking &amp; Resource Management</strong>
+                </div>
+                <div class="metric-line">
+                  <em>Hours</em>
+                  <strong id="featureHours">0.0 hrs</strong>
+                </div>
+                <div class="metric-line">
+                  <em>Weeks</em>
+                  <strong id="featureWeeksCard">0.0 weeks</strong>
+                </div>
+              </div>
             </div>
             <div class="metric">
               <span>Projected Go-Live</span>
@@ -716,8 +788,7 @@
           </div>
 
           <div class="breakdown">
-            <div class="breakdown-row"><span>Feature weeks</span><strong id="featureWeeks">0.0 weeks</strong></div>
-            <div class="breakdown-row"><span>Undocumented process adjustment</span><strong id="undocumentedWeeks">0.0 weeks</strong></div>
+            <div class="breakdown-row" id="undocumentedRow" hidden><span>Undocumented process adjustment</span><strong id="undocumentedWeeks">0.0 weeks</strong></div>
             <div class="breakdown-row"><span>Template build days</span><strong id="templateDays">0 days</strong></div>
             <div class="breakdown-row"><span>Integration days</span><strong id="integrationDays">0 days</strong></div>
             <div class="breakdown-row"><span>Selected integrations</span><strong id="selectedIntegrations">None</strong></div>
@@ -954,6 +1025,8 @@
       let integrations = selectedValues("integrations");
       if (integrations.includes("na")) integrations = ["na"];
       const integrationWeeks = integrations.reduce((sum, key) => sum + (integrationValues[key] || 0), 0);
+      const integrationHours = integrationWeeks * weeklyTemplateHours;
+      const additionalFeatureHours = featureWeeks * weeklyTemplateHours;
 
       const templateDays = templateWeeks * 7;
       const integrationDays = integrationWeeks * 7;
@@ -968,13 +1041,18 @@
       document.getElementById("buildingTasksHours").textContent = formatHours(buildingTasksHours);
       document.getElementById("templateWeeks").textContent = formatWeeks(templateWeeks);
       document.getElementById("buildingIntegrationsValue").textContent = formatWeeks(integrationWeeks);
+      document.getElementById("integrationHours").textContent = formatHours(integrationHours);
       document.getElementById("goLiveDateDisplay").textContent = formatDate(projectedGoLive);
-      document.getElementById("featureWeeks").textContent = formatWeeks(featureWeeks);
+      document.getElementById("featureHours").textContent = formatHours(additionalFeatureHours);
+      document.getElementById("featureWeeksCard").textContent = formatWeeks(featureWeeks);
       document.getElementById("undocumentedWeeks").textContent = formatWeeks(undocumentedWeeks);
       document.getElementById("templateDays").textContent = formatDays(templateDays);
       document.getElementById("integrationDays").textContent = formatDays(integrationDays);
       document.getElementById("selectedIntegrations").textContent = selectedIntegrationLabels;
       document.getElementById("selectedFeatures").textContent = selectedFeatureLabels;
+      document.getElementById("selectedIntegrationsCard").textContent = selectedIntegrationLabels;
+      document.getElementById("selectedFeaturesCard").textContent = selectedFeatureLabels;
+      document.getElementById("undocumentedRow").hidden = !processDocumentedSelected || processDocumented;
 
       document.getElementById("pdfMetricBuildingTasks").textContent = formatHours(buildingTasksHours);
       document.getElementById("pdfMetricTemplateWeeks").textContent = formatWeeks(templateWeeks);
@@ -1059,16 +1137,16 @@
 
       drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
-      drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
-      drawText("GUIDEcx | Estimate Implementation Timeline & Effort", 64, 694, 21, rgb(1, 1, 1), "F2");
-      drawText(`Estimate Prepared For: ${document.getElementById("pdfCompanyName").textContent}`, 64, 680, 12, rgb(0.84, 0.84, 0.84), "F2");
-      drawText(`Prepared By: ${document.getElementById("pdfUserName").textContent}`, 64, 660, 12, rgb(0.84, 0.84, 0.84), "F2");
+      drawRect(42, 650, pageWidth - 84, 100, rgb(0.07, 0.07, 0.07));
+      drawText("GUIDEcx | Estimte Timeline & Effort", 64, 695, 23, rgb(1, 1, 1), "F2");
+      drawText(`Estimate Prepared For: ${document.getElementById("pdfCompanyName").textContent}`, 64, 620, 12, rgb(0.07, 0.07, 0.07), "F2");
+      drawText(`Prepared By: ${document.getElementById("pdfUserName").textContent}`, 64, 602, 12, rgb(0.07, 0.07, 0.07), "F2");
 
       const introLines = wrapText(
         "This estimate is for planning and alignment and is based on what is currently known, including process documentation and integrations required for go-live.",
         92
       );
-      let introY = 592;
+      let introY = 568;
       introLines.forEach((line) => {
         drawText(line, 64, introY, 11, rgb(0.38, 0.36, 0.33));
         introY -= 16;
@@ -1082,33 +1160,37 @@
         drawText(line, 64, introY, 8, rgb(0.38, 0.36, 0.33));
         introY -= 14;
       });
-      drawText("SUMMARY", 64, introY, 13, rgb(0.42, 0.39, 0.36), "F2");
+      drawText("SUMMARY", 64, introY - 8, 14, rgb(0.42, 0.39, 0.36), "F2");
 
-      drawRect(64, 82, 484, 468, rgb(0.99, 0.99, 0.98));
+      drawRect(64, 92, 484, 430, rgb(0.99, 0.99, 0.98));
+      add("0.85 0.83 0.80 RG");
+      add("64 92 484 430 re S");
 
-      drawText("Template Build", 84, 522, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawLabelValueRows(84, 496, [
+      drawText("Template Build", 84, 490, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawLabelValueRows(84, 466, [
         ["Process is Documented", document.getElementById("pdfDocumented").textContent],
         ["Estimate Tasks", document.getElementById("totalTasks").value || "0"],
         ["Total Teams", document.getElementById("teams").value || "0"],
+        ["Effort", document.getElementById("pdfMetricBuildingTasks").textContent],
         ["Weekly Hours Commit", document.getElementById("templateWeeklyHours").value ? `${document.getElementById("templateWeeklyHours").value} hrs` : "0 hrs"],
         ["Weeks", document.getElementById("pdfMetricTemplateWeeks").textContent]
       ], 22, 18);
 
-      drawText("Integrations", 330, 522, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawText("Integrations", 330, 490, 16, rgb(0.07, 0.07, 0.07), "F2");
       const integrationList = document.getElementById("pdfIntegrations").textContent === "None"
-        ? [["Integration 1", "None"], ["Integration 2", "-"], ["Integration 3", "-"], ["Weeks", document.getElementById("pdfMetricIntegrationWeeks").textContent]]
-        : document.getElementById("pdfIntegrations").textContent.split(", ").slice(0, 3).map((item, index) => [`Integration ${index + 1}`, item]).concat([["Weeks", document.getElementById("pdfMetricIntegrationWeeks").textContent]]);
-      drawLabelValueRows(330, 496, integrationList, 18, 18);
+        ? [["Integrations", "None"], ["Hours", document.getElementById("integrationHours").textContent], ["Weeks", document.getElementById("pdfMetricIntegrationWeeks").textContent]]
+        : [["Integrations", document.getElementById("pdfIntegrations").textContent], ["Hours", document.getElementById("integrationHours").textContent], ["Weeks", document.getElementById("pdfMetricIntegrationWeeks").textContent]];
+      drawLabelValueRows(330, 466, integrationList, 18, 18);
 
-      drawText("Additional Features", 84, 256, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawText("Additional Features", 84, 240, 16, rgb(0.07, 0.07, 0.07), "F2");
       drawLabelValueRows(84, 230, [
-        ["Time Tracking", selectedValues("features").includes("timeTracking") ? "Yes" : "No"],
-        ["Resource Management", selectedValues("features").includes("resourceManagement") ? "Yes" : "No"]
+        ["Features", document.getElementById("pdfFeatures").textContent],
+        ["Hours", document.getElementById("featureHours").textContent],
+        ["Weeks", document.getElementById("featureWeeksCard").textContent]
       ], 18, 22);
 
-      drawText("Projected Go-Live Date", 330, 256, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawText(document.getElementById("pdfMetricGoLive").textContent, 330, 226, 18, rgb(0.07, 0.07, 0.07), "F2");
+      drawText("Projected Go-Live", 330, 240, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawText(document.getElementById("pdfMetricGoLive").textContent, 330, 210, 18, rgb(0.07, 0.07, 0.07), "F2");
 
       if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
         drawRect(64, 28, pageWidth - 128, 32, rgb(0.95, 0.89, 0.84));
