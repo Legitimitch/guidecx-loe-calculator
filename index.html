@@ -417,6 +417,15 @@
       text-align: right;
     }
 
+    .metric-line-single {
+      display: block;
+    }
+
+    .metric-line-single strong {
+      text-align: left;
+      line-height: 1.45;
+    }
+
     .formula {
       margin-top: 16px;
       border: 1px solid var(--line);
@@ -750,8 +759,7 @@
             <div class="metric">
               <span>Integrations</span>
               <div class="metric-lines">
-                <div class="metric-line">
-                  <em>Integrations</em>
+                <div class="metric-line metric-line-single">
                   <strong id="selectedIntegrationsCard">None</strong>
                 </div>
                 <div class="metric-line">
@@ -767,8 +775,7 @@
             <div class="metric">
               <span>Additional Features</span>
               <div class="metric-lines">
-                <div class="metric-line">
-                  <em>Features</em>
+                <div class="metric-line metric-line-single">
                   <strong id="selectedFeaturesCard">Time Tracking &amp; Resource Management</strong>
                 </div>
                 <div class="metric-line">
@@ -785,13 +792,6 @@
               <span>Projected Go-Live</span>
               <strong id="goLiveDateDisplay">TBD</strong>
             </div>
-          </div>
-
-          <div class="breakdown">
-            <div class="breakdown-row"><span>Template build days</span><strong id="templateDays">0 days</strong></div>
-            <div class="breakdown-row"><span>Integration days</span><strong id="integrationDays">0 days</strong></div>
-            <div class="breakdown-row"><span>Selected integrations</span><strong id="selectedIntegrations">None</strong></div>
-            <div class="breakdown-row"><span>Additional features</span><strong id="selectedFeatures">None</strong></div>
           </div>
         </section>
       </aside>
@@ -1010,18 +1010,6 @@
       return values.map((value) => labelForValue(name, value)).join(", ");
     }
 
-    function summarizeList(text, maxItems = 2) {
-      const items = String(text)
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .filter((item) => item !== "None");
-
-      if (items.length === 0) return "None";
-      if (items.length <= maxItems) return items.join(", ");
-      return `${items.slice(0, maxItems).join(", ")} +${items.length - maxItems} more`;
-    }
-
     function calculate() {
       toggleConditionalFields();
 
@@ -1045,9 +1033,6 @@
       const integrationTrackWeeks = integrationWeeks > 0 ? integrationWeeks + 1 : 0;
       const projectWeeks = Math.max(templateTrackWeeks, integrationTrackWeeks);
 
-      const templateDays = templateBuildWeeks * 7;
-      const integrationDays = integrationWeeks * 7;
-
       const projectedGoLive = new Date();
       projectedGoLive.setHours(12, 0, 0, 0);
       projectedGoLive.setDate(projectedGoLive.getDate() + Math.ceil(projectWeeks * 7));
@@ -1062,12 +1047,8 @@
       document.getElementById("goLiveDateDisplay").textContent = formatDate(projectedGoLive);
       document.getElementById("featureHours").textContent = formatHours(additionalFeatureHours);
       document.getElementById("featureWeeksCard").textContent = formatWeeks(featureWeeks);
-      document.getElementById("templateDays").textContent = formatDays(templateDays);
-      document.getElementById("integrationDays").textContent = formatDays(integrationDays);
-      document.getElementById("selectedIntegrations").textContent = selectedIntegrationLabels;
-      document.getElementById("selectedFeatures").textContent = selectedFeatureLabels;
-      document.getElementById("selectedIntegrationsCard").textContent = summarizeList(selectedIntegrationLabels);
-      document.getElementById("selectedFeaturesCard").textContent = summarizeList(selectedFeatureLabels);
+      document.getElementById("selectedIntegrationsCard").textContent = selectedIntegrationLabels;
+      document.getElementById("selectedFeaturesCard").textContent = selectedFeatureLabels;
 
       document.getElementById("pdfMetricBuildingTasks").textContent = formatHours(buildingTasksHours);
       document.getElementById("pdfMetricTemplateWeeks").textContent = formatWeeks(templateBuildWeeks);
@@ -1186,7 +1167,7 @@
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
       drawRect(48, 668, pageWidth - 96, 86, rgb(0.07, 0.07, 0.07));
       drawText("GUIDEcx", 68, 726, 11, rgb(0.77, 0.77, 0.77), "F2");
-      drawText("Estimte Timeline & Effort", 68, 696, 24, rgb(1, 1, 1), "F2");
+      drawText("Estimate Timeline & Effort", 68, 696, 24, rgb(1, 1, 1), "F2");
 
       drawText(`Estimate Prepared For: ${document.getElementById("pdfCompanyName").textContent}`, 68, 638, 12, rgb(0.07, 0.07, 0.07), "F2");
       drawText(`Prepared By: ${document.getElementById("pdfUserName").textContent}`, 68, 618, 12, rgb(0.07, 0.07, 0.07), "F2");
@@ -1214,11 +1195,12 @@
         220,
         120,
         "Additional Features",
-        document.getElementById("featureWeeksCard").textContent,
+        document.getElementById("pdfFeatures").textContent,
         [
-          `Features: ${summarizeList(document.getElementById("pdfFeatures").textContent)}`,
-          `Hours: ${document.getElementById("featureHours").textContent}`
-        ]
+          `Hours: ${document.getElementById("featureHours").textContent}`,
+          `Weeks: ${document.getElementById("featureWeeksCard").textContent}`
+        ],
+        13
       );
 
       drawSummaryCard(
@@ -1227,11 +1209,12 @@
         220,
         120,
         "Integrations",
-        document.getElementById("pdfMetricIntegrationWeeks").textContent,
+        document.getElementById("pdfIntegrations").textContent,
         [
-          `Scope: ${summarizeList(document.getElementById("pdfIntegrations").textContent)}`,
-          `Hours: ${document.getElementById("integrationHours").textContent}`
-        ]
+          `Hours: ${document.getElementById("integrationHours").textContent}`,
+          `Weeks: ${document.getElementById("pdfMetricIntegrationWeeks").textContent}`
+        ],
+        13
       );
 
       drawSummaryCard(
@@ -1256,16 +1239,6 @@
         ["Estimate Tasks", document.getElementById("totalTasks").value || "0"],
         ["Total Teams", document.getElementById("teams").value || "0"],
         ["Weekly Hours Commit", document.getElementById("pdfWeeklyHours").textContent]
-      ], 18, 16);
-
-      drawRect(324, 116, 220, 148, rgb(1, 1, 1));
-      drawStrokeRect(324, 116, 220, 148, "0.86 0.83 0.79 RG");
-      drawText("SCOPE SNAPSHOT", 340, 238, 10, rgb(0.42, 0.39, 0.36), "F2");
-      drawLabelValueRows(340, 216, [
-        ["Integrations", summarizeList(document.getElementById("pdfIntegrations").textContent)],
-        ["Additional Features", summarizeList(document.getElementById("pdfFeatures").textContent)],
-        ["Template + Features", document.getElementById("pdfMetricTemplateTrackWeeks").textContent],
-        ["Integration Track", document.getElementById("pdfMetricIntegrationTrackWeeks").textContent]
       ], 18, 16);
 
       if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
