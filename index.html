@@ -1041,6 +1041,20 @@
         return lines;
       }
 
+      function drawLabelValueRows(x, startY, rows, valueMaxChars = 22, rowGap = 28) {
+        let y = startY;
+        rows.forEach(([label, value]) => {
+          drawText(String(label).toUpperCase(), x, y, 8, rgb(0.42, 0.39, 0.36), "F2");
+          y -= 14;
+          const lines = wrapText(value, valueMaxChars);
+          lines.forEach((line) => {
+            drawText(line, x, y, 12, rgb(0.07, 0.07, 0.07), "F2");
+            y -= 13;
+          });
+          y -= rowGap - 13;
+        });
+      }
+
       drawRect(0, 0, pageWidth, pageHeight, rgb(0.96, 0.95, 0.92));
       drawRect(28, 28, pageWidth - 56, pageHeight - 56, rgb(0.995, 0.99, 0.975));
       drawRect(42, 620, pageWidth - 84, 130, rgb(0.07, 0.07, 0.07));
@@ -1066,66 +1080,63 @@
         drawText(line, 64, introY, 8, rgb(0.38, 0.36, 0.33));
         introY -= 14;
       });
-      introY -= 28;
+      const sectionTop = introY - 6;
+      const leftX = 64;
+      const rightX = 318;
+      const colW = 230;
 
-      drawText("SUMMARY", 64, introY, 13, rgb(0.42, 0.39, 0.36), "F2");
+      drawRect(leftX, 392, colW, 148, rgb(0.99, 0.99, 0.98));
+      drawText("Estimate Details", leftX + 16, 518, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawLabelValueRows(leftX + 16, 492, [
+        ["Company Name", document.getElementById("pdfCompanyName").textContent],
+        ["User Name", document.getElementById("pdfUserName").textContent]
+      ], 24, 30);
+
+      drawRect(rightX, 392, colW, 148, rgb(0.99, 0.99, 0.98));
+      drawText("Template Build", rightX + 16, 518, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawLabelValueRows(rightX + 16, 492, [
+        ["Process is Documented", document.getElementById("pdfDocumented").textContent],
+        ["Estimate Total Tasks", document.getElementById("totalTasks").value || "0"],
+        ["Total Teams", document.getElementById("teams").value || "0"],
+        ["Weekly Hours Commit", document.getElementById("templateWeeklyHours").value ? `${document.getElementById("templateWeeklyHours").value} hrs` : "0 hrs"]
+      ], 20, 18);
+
+      drawRect(leftX, 224, colW, 146, rgb(0.99, 0.99, 0.98));
+      drawText("Critical Integrations", leftX + 16, 348, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawLabelValueRows(leftX + 16, 322, [
+        ["Required Integrations", document.getElementById("pdfIntegrations").textContent]
+      ], 24, 18);
+
+      drawRect(rightX, 224, colW, 146, rgb(0.99, 0.99, 0.98));
+      drawText("Additional Features", rightX + 16, 348, 16, rgb(0.07, 0.07, 0.07), "F2");
+      drawLabelValueRows(rightX + 16, 322, [
+        ["Included Features", document.getElementById("pdfFeatures").textContent]
+      ], 24, 18);
+
+      drawRect(64, 56, 484, 148, rgb(0.99, 0.99, 0.98));
+      drawText("Estimate Summary", 80, 180, 16, rgb(0.07, 0.07, 0.07), "F2");
 
       const cards = [
         ["Building Tasks", document.getElementById("pdfMetricBuildingTasks").textContent],
         ["Template Build", document.getElementById("pdfMetricTemplateWeeks").textContent],
         ["Integrations", document.getElementById("pdfMetricIntegrationWeeks").textContent],
-        [document.getElementById("pdfMetricGoLiveLabel").textContent, document.getElementById("pdfMetricGoLive").textContent]
+        ["Projected Go-Live", document.getElementById("pdfMetricGoLive").textContent]
       ];
 
-      const cardY = introY - 112;
-      const cardW = 114;
-      const cardH = 92;
+      const cardY = 84;
+      const cardW = 108;
+      const cardH = 76;
       const cardGap = 10;
       cards.forEach((card, index) => {
-        const x = 64 + (index * (cardW + cardGap));
+        const x = 80 + (index * (cardW + cardGap));
         drawRect(x, cardY, cardW, cardH, rgb(0.97, 0.96, 0.94));
-        drawText(card[0], x + 10, cardY + 68, 9, rgb(0.42, 0.39, 0.36), "F2");
-        const valueLines = wrapText(card[1], 16);
-        let valueY = cardY + 38;
+        drawText(card[0], x + 10, cardY + 56, 8, rgb(0.42, 0.39, 0.36), "F2");
+        const valueLines = wrapText(card[1], 14);
+        let valueY = cardY + 30;
         valueLines.forEach((line) => {
-          drawText(line, x + 10, valueY, 16, rgb(0.07, 0.07, 0.07), "F2");
-          valueY -= 18;
+          drawText(line, x + 10, valueY, 14, rgb(0.07, 0.07, 0.07), "F2");
+          valueY -= 16;
         });
-      });
-
-      drawRect(64, 56, 484, 296, rgb(0.99, 0.99, 0.98));
-      drawText("Template Build", 80, 318, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawRect(80, 154, 210, 146, rgb(0.97, 0.96, 0.94));
-      const templateRows = [
-        ["Process is documented", document.getElementById("pdfDocumented").textContent],
-        ["Effort", document.getElementById("pdfBuildingTasks").textContent],
-        ["Weekly Hours Commit", document.getElementById("pdfWeeklyHours").textContent],
-        ["Total Weeks", document.getElementById("pdfTemplateWeeks").textContent]
-      ];
-      let templateY = 278;
-      templateRows.forEach(([label, value]) => {
-        drawText(label.toUpperCase(), 94, templateY, 8, rgb(0.42, 0.39, 0.36), "F2");
-        drawText(value, 204, templateY, 11, rgb(0.07, 0.07, 0.07), "F2");
-        templateY -= 30;
-      });
-
-      drawText("Integrations", 318, 318, 16, rgb(0.07, 0.07, 0.07), "F2");
-      drawRect(318, 134, 214, 166, rgb(0.97, 0.96, 0.94));
-      const integrationRows = [
-        ["Integrations", document.getElementById("pdfIntegrations").textContent],
-        ["Additional Feature Implementation", document.getElementById("pdfFeatures").textContent],
-        [document.getElementById("pdfGoLiveLabel").textContent.replace("go-live", "Go-Live"), document.getElementById("pdfGoLive").textContent]
-      ];
-      let integrationY = 278;
-      integrationRows.forEach(([label, value]) => {
-        drawText(label.toUpperCase(), 332, integrationY, 8, rgb(0.42, 0.39, 0.36), "F2");
-        integrationY -= 16;
-        const lines = wrapText(value, 24);
-        lines.forEach((line) => {
-          drawText(line, 332, integrationY, 12, rgb(0.07, 0.07, 0.07), "F2");
-          integrationY -= 14;
-        });
-        integrationY -= 12;
       });
 
       if (!document.getElementById("pdfUndocumentedNoteRow").hidden) {
