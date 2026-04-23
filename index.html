@@ -183,19 +183,6 @@
       border: 1px solid var(--line);
     }
 
-    .button.icon-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .button.icon-button svg {
-      width: 18px;
-      height: 18px;
-      flex: 0 0 auto;
-    }
-
     .status {
       min-height: 1.4rem;
       color: var(--muted);
@@ -360,17 +347,21 @@
       gap: 12px;
     }
 
-    .summary-actions {
-      margin-top: 18px;
-    }
-
     .metric {
+      position: relative;
       border-radius: 18px;
       padding: 16px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 242, 236, 0.98)),
         white;
       border: 1px solid var(--line);
+    }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .metric span {
@@ -434,6 +425,53 @@
     .metric-line-single strong {
       text-align: left;
       line-height: 1.45;
+    }
+
+    .info-bubble {
+      position: relative;
+      flex: 0 0 auto;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 800;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: help;
+    }
+
+    .info-bubble::after {
+      content: attr(data-tip);
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      width: min(260px, 62vw);
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #111111;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1.45;
+      letter-spacing: 0;
+      text-transform: none;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 140ms ease, transform 140ms ease;
+      z-index: 5;
+    }
+
+    .info-bubble:hover::after,
+    .info-bubble:focus-visible::after {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .formula {
@@ -611,11 +649,18 @@
           <div class="panel-header">
             <h2>Critical Integrations</h2>
             <p class="panel-copy">Select each known core integration REQUIRED for go-live.</p>
+            <p class="panel-copy">*Formal integration scoping is still required. Hours depend on complexity and what must be live at go-live versus post go-live.</p>
           </div>
 
           <div class="chip-grid" id="integrationChecks"></div>
 
           <div class="field-grid" style="margin-top: 16px;">
+            <label>
+              Weekly Hours Commit for Integrations
+              <input id="integrationWeeklyHours" name="integrationWeeklyHours" type="number" min="0" step="1" value="0">
+              <span class="field-help">Estimated weekly hours available for integration work.</span>
+            </label>
+
             <label class="full" id="integrationOtherWrap" hidden>
               Other Integration
               <input id="integrationOther" name="integrationOther" type="text" placeholder="Name the additional integration">
@@ -648,7 +693,10 @@
 
           <div class="summary-grid">
             <div class="metric">
-              <span>Template Build</span>
+              <div class="metric-top">
+                <span>Template Build</span>
+                <button class="info-bubble" type="button" aria-label="Template Build calculation info" data-tip="Template build hours use about 7 minutes per task, plus 2 hours for each selected additional feature. Weeks are total template-build hours divided by template weekly hours, plus 2 weeks if the process is undocumented.">i</button>
+              </div>
               <div class="metric-lines">
                 <div class="metric-line">
                   <em>Hours</em>
@@ -661,7 +709,10 @@
               </div>
             </div>
             <div class="metric">
-              <span>Integrations</span>
+              <div class="metric-top">
+                <span>Integrations</span>
+                <button class="info-bubble" type="button" aria-label="Integrations calculation info" data-tip="Integration hours are the sum of the selected integration values. Integration weeks are those hours divided by the weekly hours committed to integrations. A formal scoping call is still needed to confirm final effort.">i</button>
+              </div>
               <div class="metric-lines">
                 <div class="metric-line metric-line-single">
                   <strong id="selectedIntegrationsCard">None</strong>
@@ -677,7 +728,10 @@
               </div>
             </div>
             <div class="metric">
-              <span>Additional Features</span>
+              <div class="metric-top">
+                <span>Additional Features</span>
+                <button class="info-bubble" type="button" aria-label="Additional Features calculation info" data-tip="Each selected additional feature adds 2 hours for setup and training. Those hours are shown here and are also rolled into the template-build total and overall template timeline.">i</button>
+              </div>
               <div class="metric-lines">
                 <div class="metric-line metric-line-single">
                   <strong id="selectedFeaturesCard">Time Tracking &amp; Resource Management</strong>
@@ -693,21 +747,13 @@
               </div>
             </div>
             <div class="metric">
-              <span>Projected Go-Live</span>
+              <div class="metric-top">
+                <span>Projected Go-Live</span>
+                <button class="info-bubble" type="button" aria-label="Projected Go-Live calculation info" data-tip="Projected go-live uses the later of the two workstreams: template build or integrations. Integrations include a 1-week offset to reflect starting during week 2 of the implementation.">i</button>
+              </div>
               <strong id="goLiveDateDisplay">TBD</strong>
             </div>
           </div>
-
-          <div class="summary-actions">
-            <button class="button primary icon-button" id="downloadSummaryButton" type="button" aria-label="Download estimate summary PDF">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 4v10m0 0 4-4m-4 4-4-4M5 18h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-              </svg>
-              <span>Download Estimate Summary</span>
-            </button>
-          </div>
-
-          <div class="status" id="statusMessage" aria-live="polite"></div>
         </section>
       </aside>
     </div>
@@ -730,11 +776,8 @@
       ["other", "Other"]
     ];
 
-    const statusEl = document.getElementById("statusMessage");
     const integrationOtherWrap = document.getElementById("integrationOtherWrap");
     const featureOtherWrap = document.getElementById("featureOtherWrap");
-    const measureCanvas = document.createElement("canvas");
-    const measureContext = measureCanvas.getContext("2d");
 
     const integrationValues = {
       salesforce: 2,
@@ -791,14 +834,6 @@
       });
     }
 
-    function setStatus(message) {
-      statusEl.textContent = message;
-      window.clearTimeout(setStatus.timer);
-      setStatus.timer = window.setTimeout(() => {
-        statusEl.textContent = "";
-      }, 2600);
-    }
-
     function toggleConditionalFields() {
       integrationOtherWrap.hidden = !selectedValues("integrations").includes("other");
       featureOtherWrap.hidden = !selectedValues("features").includes("other");
@@ -826,21 +861,23 @@
 
       const totalTasks = num("totalTasks");
       const weeklyTemplateHours = Math.max(num("templateWeeklyHours"), 0);
+      const weeklyIntegrationHours = Math.max(num("integrationWeeklyHours"), 0);
       const processDocumentedValue = document.getElementById("processDocumented").value;
       const processDocumented = processDocumentedValue === "yes";
       const processDocumentedSelected = processDocumentedValue === "yes" || processDocumentedValue === "no";
-      const buildingTasksHours = (totalTasks * 7) / 60;
       const selectedFeatureValues = selectedValues("features");
-      const featureWeeks = selectedFeatureValues.includes("timeTracking") || selectedFeatureValues.includes("resourceManagement") ? 1 : 0;
+      const buildingTasksHours = (totalTasks * 7) / 60;
+      const additionalFeatureHours = selectedFeatureValues.filter((value) => value !== "other").length * 2;
+      const templateBuildHours = buildingTasksHours + additionalFeatureHours;
+      const featureWeeks = weeklyTemplateHours > 0 ? additionalFeatureHours / weeklyTemplateHours : 0;
       const undocumentedWeeks = processDocumentedSelected ? (processDocumented ? 0 : 2) : 0;
-      const templateBuildWeeks = weeklyTemplateHours > 0 ? (buildingTasksHours / weeklyTemplateHours) + undocumentedWeeks : undocumentedWeeks;
+      const templateBuildWeeks = weeklyTemplateHours > 0 ? (templateBuildHours / weeklyTemplateHours) + undocumentedWeeks : undocumentedWeeks;
 
       let integrations = selectedValues("integrations");
       if (integrations.includes("na")) integrations = ["na"];
-      const integrationWeeks = integrations.reduce((sum, key) => sum + (integrationValues[key] || 0), 0);
-      const integrationHours = integrationWeeks * weeklyTemplateHours;
-      const additionalFeatureHours = featureWeeks * weeklyTemplateHours;
-      const templateTrackWeeks = templateBuildWeeks + featureWeeks;
+      const integrationHours = integrations.reduce((sum, key) => sum + (integrationValues[key] || 0), 0);
+      const integrationWeeks = weeklyIntegrationHours > 0 ? integrationHours / weeklyIntegrationHours : 0;
+      const templateTrackWeeks = templateBuildWeeks;
       const integrationTrackWeeks = integrationWeeks > 0 ? integrationWeeks + 1 : 0;
       const projectWeeks = Math.max(templateTrackWeeks, integrationTrackWeeks);
 
@@ -854,7 +891,7 @@
       return {
         companyName: document.getElementById("companyName").value.trim(),
         userName: document.getElementById("userName").value.trim(),
-        buildingTasksHours,
+        buildingTasksHours: templateBuildHours,
         templateBuildWeeks,
         integrationHours,
         integrationWeeks,
@@ -863,7 +900,7 @@
         projectedGoLive,
         selectedIntegrationLabels,
         selectedFeatureLabels,
-        templateHoursDisplay: formatHours(buildingTasksHours),
+        templateHoursDisplay: formatHours(templateBuildHours),
         templateWeeksDisplay: formatWeeks(templateBuildWeeks),
         integrationHoursDisplay: formatHours(integrationHours),
         integrationWeeksDisplay: formatWeeks(integrationWeeks),
@@ -887,241 +924,8 @@
       document.getElementById("selectedFeaturesCard").textContent = estimate.selectedFeatureLabels;
     }
 
-    function pdfSafeText(value) {
-      return String(value ?? "")
-        .normalize("NFKD")
-        .replace(/[^\x20-\x7E]/g, "")
-        .trim();
-    }
-
-    function escapePdfText(value) {
-      return pdfSafeText(value)
-        .replace(/\\/g, "\\\\")
-        .replace(/\(/g, "\\(")
-        .replace(/\)/g, "\\)");
-    }
-
-    function safeFilenameSegment(value) {
-      const normalized = pdfSafeText(value)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      return normalized || "guidecx";
-    }
-
-    function wrapPdfText(text, maxWidth, fontSize, weight = "normal", maxLines = Infinity) {
-      const safeText = pdfSafeText(text) || "None";
-      const pxWidth = maxWidth * (96 / 72);
-      measureContext.font = `${weight === "bold" ? "700" : "500"} ${fontSize * (96 / 72)}px Arial`;
-
-      const words = safeText.split(/\s+/).filter(Boolean);
-      if (!words.length) return ["None"];
-
-      const lines = [];
-      let current = words.shift();
-
-      words.forEach((word) => {
-        const testLine = `${current} ${word}`;
-        if (measureContext.measureText(testLine).width <= pxWidth) {
-          current = testLine;
-          return;
-        }
-        lines.push(current);
-        current = word;
-      });
-
-      if (current) {
-        lines.push(current);
-      }
-
-      if (lines.length > maxLines) {
-        const truncated = lines.slice(0, maxLines);
-        truncated[maxLines - 1] = `${truncated[maxLines - 1].replace(/\.*$/, "")}...`;
-        return truncated;
-      }
-
-      return lines;
-    }
-
-    function buildEstimatePdf(estimate) {
-      const pageWidth = 612;
-      const pageHeight = 792;
-      const margin = 54;
-      const contentWidth = pageWidth - (margin * 2);
-      const commands = [];
-
-      const colors = {
-        ink: [0.07, 0.07, 0.07],
-        muted: [0.39, 0.38, 0.36],
-        accent: [0.07, 0.07, 0.07],
-        accentSoft: [0.92, 0.9, 0.87],
-        card: [0.97, 0.96, 0.94],
-        white: [1, 1, 1],
-        line: [0.84, 0.82, 0.79]
-      };
-
-      function fmt(value) {
-        return Number(value).toFixed(2).replace(/\.00$/, "");
-      }
-
-      function setFill([r, g, b]) {
-        commands.push(`${fmt(r)} ${fmt(g)} ${fmt(b)} rg`);
-      }
-
-      function setStroke([r, g, b]) {
-        commands.push(`${fmt(r)} ${fmt(g)} ${fmt(b)} RG`);
-      }
-
-      function drawRect(x, top, width, height, fillColor, strokeColor = null) {
-        if (fillColor) setFill(fillColor);
-        if (strokeColor) setStroke(strokeColor);
-        const y = pageHeight - top - height;
-        commands.push(`${fmt(x)} ${fmt(y)} ${fmt(width)} ${fmt(height)} re ${strokeColor ? "B" : "f"}`);
-      }
-
-      function drawText(text, x, top, { font = "F1", size = 12, color = colors.ink } = {}) {
-        const y = pageHeight - top - size;
-        commands.push("BT");
-        commands.push(`/${font} ${fmt(size)} Tf`);
-        setFill(color);
-        commands.push(`1 0 0 1 ${fmt(x)} ${fmt(y)} Tm`);
-        commands.push(`(${escapePdfText(text)}) Tj`);
-        commands.push("ET");
-      }
-
-      function drawTextBlock(lines, x, top, { font = "F1", size = 12, color = colors.ink, leading = size + 4 } = {}) {
-        lines.forEach((line, index) => {
-          drawText(line, x, top + (index * leading), { font, size, color });
-        });
-      }
-
-      function drawLabeledValue(label, value, x, top, width) {
-        drawText(label, x, top, { font: "F2", size: 10, color: colors.muted });
-        const wrappedValue = wrapPdfText(value, width, 15, "bold", 2);
-        drawTextBlock(wrappedValue, x, top + 18, { font: "F2", size: 15, color: colors.ink, leading: 18 });
-      }
-
-      function drawSummaryCard(top, title, bodyLines, footerLines = []) {
-        const titleHeight = 20;
-        const bodyHeight = bodyLines.length ? (bodyLines.length * 17) + 10 : 0;
-        const footerHeight = footerLines.length ? (footerLines.length * 19) + 8 : 0;
-        const cardHeight = 26 + titleHeight + bodyHeight + footerHeight + 18;
-
-        drawRect(margin, top, contentWidth, cardHeight, colors.card, colors.line);
-        drawText(title, margin + 18, top + 18, { font: "F2", size: 11, color: colors.muted });
-        if (bodyLines.length) {
-          drawTextBlock(bodyLines, margin + 18, top + 42, { font: "F1", size: 12, color: colors.ink, leading: 17 });
-        }
-        if (footerLines.length) {
-          const footerTop = top + 42 + bodyHeight;
-          commands.push(`${fmt(margin + 18)} ${fmt(pageHeight - footerTop)} m ${fmt(margin + contentWidth - 18)} ${fmt(pageHeight - footerTop)} l S`);
-          footerLines.forEach((line, index) => {
-            const labelX = margin + 18;
-            const valueX = margin + contentWidth - 18 - 130;
-            drawText(line.label, labelX, footerTop + 10 + (index * 19), { font: "F2", size: 10, color: colors.muted });
-            drawText(line.value, valueX, footerTop + 10 + (index * 19), { font: "F2", size: 12, color: colors.ink });
-          });
-        }
-
-        return top + cardHeight + 14;
-      }
-
-      drawRect(margin, margin, contentWidth, 126, colors.accent);
-      drawText("GUIDEcx Estimate Summary", margin + 24, margin + 22, { font: "F2", size: 28, color: colors.white });
-      drawText("Customer-facing implementation estimate overview", margin + 24, margin + 58, { font: "F1", size: 11, color: colors.accentSoft });
-
-      drawLabeledValue("Prepared For", estimate.companyName || "Not specified", margin + 24, margin + 82, 200);
-      drawLabeledValue("Prepared By", estimate.userName || "Not specified", margin + 216, margin + 82, 160);
-      drawLabeledValue("Created", formatDate(new Date()), margin + 396, margin + 82, 92);
-
-      let top = margin + 144;
-
-      top = drawSummaryCard(
-        top,
-        "TEMPLATE BUILD",
-        [],
-        [
-          { label: "Hours", value: estimate.templateHoursDisplay },
-          { label: "Weeks", value: estimate.templateWeeksDisplay }
-        ]
-      );
-
-      top = drawSummaryCard(
-        top,
-        "INTEGRATIONS",
-        wrapPdfText(estimate.selectedIntegrationLabels, contentWidth - 36, 12, "normal", 4),
-        [
-          { label: "Hours", value: estimate.integrationHoursDisplay },
-          { label: "Weeks", value: estimate.integrationWeeksDisplay }
-        ]
-      );
-
-      top = drawSummaryCard(
-        top,
-        "ADDITIONAL FEATURES",
-        wrapPdfText(estimate.selectedFeatureLabels, contentWidth - 36, 12, "normal", 4),
-        [
-          { label: "Hours", value: estimate.featureHoursDisplay },
-          { label: "Weeks", value: estimate.featureWeeksDisplay }
-        ]
-      );
-
-      drawRect(margin, top, contentWidth, 106, colors.card, colors.line);
-      drawText("PROJECTED GO-LIVE", margin + 18, top + 18, { font: "F2", size: 11, color: colors.muted });
-      drawText(estimate.goLiveDateDisplay, margin + 18, top + 42, { font: "F2", size: 28, color: colors.ink });
-      drawText("Based on the current estimate summary inputs.", margin + 18, top + 78, { font: "F1", size: 11, color: colors.muted });
-
-      const content = commands.join("\n");
-      const objects = [
-        "<< /Type /Catalog /Pages 2 0 R >>",
-        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>`,
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
-        `<< /Length ${content.length} >>\nstream\n${content}\nendstream`
-      ];
-
-      let pdf = "%PDF-1.4\n";
-      const offsets = [0];
-
-      objects.forEach((object, index) => {
-        offsets[index + 1] = pdf.length;
-        pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
-      });
-
-      const xrefStart = pdf.length;
-      pdf += `xref\n0 ${objects.length + 1}\n`;
-      pdf += "0000000000 65535 f \n";
-      offsets.slice(1).forEach((offset) => {
-        pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
-      });
-      pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
-
-      return new Blob([pdf], { type: "application/pdf" });
-    }
-
     document.addEventListener("input", calculate);
     document.addEventListener("change", calculate);
-
-    document.getElementById("downloadSummaryButton").addEventListener("click", () => {
-      try {
-        const estimate = computeEstimate();
-        const blob = buildEstimatePdf(estimate);
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        const companySlug = safeFilenameSegment(estimate.companyName);
-
-        link.href = downloadUrl;
-        link.download = `${companySlug}-estimate-summary.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(downloadUrl);
-        setStatus("Estimate summary PDF downloaded.");
-      } catch {
-        setStatus("PDF download could not be created.");
-      }
-    });
 
     toggleConditionalFields();
     calculate();
